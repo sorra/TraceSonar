@@ -3,7 +3,7 @@ package sorra.tracesonar.main;
 import sorra.tracesonar.core.FileWalker;
 import sorra.tracesonar.core.GreatMap;
 import sorra.tracesonar.core.Traceback;
-import sorra.tracesonar.model.Caller;
+import sorra.tracesonar.model.Method;
 
 public class Main {
   public static void main(String[] args) {
@@ -19,7 +19,7 @@ public class Main {
     });
 
     System.out.println("\nTraceback:\n");
-    Traceback.printTree(Traceback.search(new Caller("sorra/tracesonar/core/GreatMap", "*", ""), null), 0);
+    Traceback.search(new Method("sorra/tracesonar/core/GreatMap", "*", ""));
 
   }
 }

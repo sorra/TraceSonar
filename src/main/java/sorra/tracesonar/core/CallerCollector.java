@@ -2,21 +2,21 @@ package sorra.tracesonar.core;
 
 import java.util.Set;
 
-import sorra.tracesonar.model.Caller;
+import sorra.tracesonar.model.Method;
 
 public class CallerCollector {
-  private String className;
-  private Set<Caller> callers = Factory.infoSet();
+  private Method self;
+  private Set<Method> callers = Factory.infoSet();
 
-  public CallerCollector(String className) {
-    this.className = className;
+  public CallerCollector(Method self) {
+    this.self = self;
   }
 
-  public void regCaller(Caller caller) {
+  public void regCaller(Method caller) {
     callers.add(caller);
   }
 
-  public Set<Caller> getCallers() {
+  public Set<Method> getCallers() {
     return callers;
   }
 }

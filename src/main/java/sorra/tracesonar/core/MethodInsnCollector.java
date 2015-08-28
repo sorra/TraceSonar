@@ -6,11 +6,9 @@ import java.io.UncheckedIOException;
 import java.util.HashSet;
 import java.util.Set;
 
-import org.objectweb.asm.ClassReader;
-import org.objectweb.asm.ClassVisitor;
-import org.objectweb.asm.FieldVisitor;
-import org.objectweb.asm.MethodVisitor;
-import sorra.tracesonar.model.Caller;
+import org.objectweb.asm.*;
+import sorra.tracesonar.model.Method;
+import sorra.tracesonar.util.Pair;
 import sorra.tracesonar.util.Strings;
 
 import static org.objectweb.asm.Opcodes.ASM5;
@@ -29,7 +27,6 @@ public class MethodInsnCollector {
       throw new UncheckedIOException(e);
     }
     classReader.accept(classVisitor, 0);
-    GreatMap.INSTANCE.getCallerCollector(topClassName);
   }
 
   public String getClassName() {
@@ -55,30 +52,67 @@ public class MethodInsnCollector {
 
     @Override
     public MethodVisitor visitMethod(int access, String name, String desc, String signature, String[] exceptions) {
-      Caller caller = new Caller(className, name, desc);
+      Method caller = new Method(className, name, desc);
+      // Also initialize as a free callee
+//      if ((access & Opcodes.ACC_PRIVATE) == 0 // Non-private
+//          && !isIgnore(className, name, desc)) {
+//        GreatMap.INSTANCE.getCallerCollector(caller);
+//      }
       return new MethodVisitor(ASM5) {
         @Override
         public void visitMethodInsn(int opcode, String owner, String name, String desc, boolean itf) {
-          owner = Strings.substringBefore(owner, "$");
-          if (owner.equals(topClassName)) { // Ignore self class calls
-            return;
-          }
-          for (String prefix : IGNORE_PACKAGE_PREFIXES) { // Ignore basic libraries
-            if (owner.startsWith(prefix)) {
-              return;
-            }
-          }
-          GreatMap.INSTANCE.getCallerCollector(owner).regCaller(caller);
+//          if (Strings.substringBefore(owner, "$").equals(topClassName)) { // Ignore self class calls
+//            return;
+//          }
+          if (isIgnore(owner, name, desc)) return;
+          GreatMap.INSTANCE.getCallerCollector(new Method(owner, name, desc)).regCaller(caller);
           calledClasses.add(owner);
+        }
+
+        @Override
+        public void visitInvokeDynamicInsn(String name, String desc, Handle bsm, Object... bsmArgs) {
+          Handle handle = findInvokedHandle(bsmArgs);
+          if (handle == null) return;
+          if (isIgnore(handle.getOwner(), handle.getName(), handle.getDesc())) return;
+          GreatMap.INSTANCE.getCallerCollector(new Method(handle.getOwner(), handle.getName(), handle.getDesc()))
+              .regCaller(caller);
+          calledClasses.add(handle.getOwner());
+        }
+
+        private Handle findInvokedHandle(Object[] bsmArgs) {
+          for (Object arg : bsmArgs) {
+            if (arg instanceof Handle) return (Handle) arg;
+          }
+          return null;
         }
       };
     }
   };
 
-  private static Set<String> IGNORE_PACKAGE_PREFIXES = new HashSet<>();
+  private static boolean isIgnore(String owner, String name, String desc) {
+    for (String pkg : IGNORE_PACKAGE) { // Ignore basic libraries
+      if (owner.startsWith(pkg)) {
+        return true;
+      }
+    }
+    for (Pair<String, String> meth : IGNORE_METHODS) { // Ignore Object methods
+      if (meth._1.equals(name) && meth._2.equals(desc)) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  private static Set<String> IGNORE_PACKAGE = new HashSet<>();
   static {
-    IGNORE_PACKAGE_PREFIXES.add("java/");
-    IGNORE_PACKAGE_PREFIXES.add("sun/");
-    IGNORE_PACKAGE_PREFIXES.add("com/sun/");
+    IGNORE_PACKAGE.add("java/");
+    IGNORE_PACKAGE.add("sun/");
+    IGNORE_PACKAGE.add("com/sun/");
+  }
+  private static Set<Pair<String, String>> IGNORE_METHODS = new HashSet<>();
+  static {
+    IGNORE_METHODS.add(Pair.of("equals", "(Ljava/lang/Object;)Z"));
+    IGNORE_METHODS.add(Pair.of("hashCode", "I"));
+    IGNORE_METHODS.add(Pair.of("toString", "Ljava/lang/String;"));
   }
 }

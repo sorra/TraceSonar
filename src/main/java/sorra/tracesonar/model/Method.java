@@ -1,11 +1,11 @@
 package sorra.tracesonar.model;
 
-public class Caller {
+public class Method {
   public final String owner;
   public final String methodName;
   public final String desc;
 
-  public Caller(String owner, String methodName, String desc) {
+  public Method(String owner, String methodName, String desc) {
     this.owner = owner;
     this.methodName = methodName;
     this.desc = desc;
@@ -16,7 +16,7 @@ public class Caller {
     if (this == o) return true;
     if (o == null || getClass() != o.getClass()) return false;
 
-    Caller caller = (Caller) o;
+    Method caller = (Method) o;
 
     if (!methodName.equals(caller.methodName)) return false;
     if (!owner.equals(caller.owner)) return false;

@@ -4,29 +4,50 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
-import sorra.tracesonar.model.Caller;
-import sorra.tracesonar.util.Strings;
+import sorra.tracesonar.model.Method;
 
 public class Traceback {
-  public static TreeNode search(Caller self, TreeNode parent) {
+
+  public static void search(Method self) {
+    if (self.owner.equals("*")) {
+      GreatMap.INSTANCE.callerCollectors.keySet().forEach(Traceback::searchAndPrintTree);
+      return;
+    }
+    if (self.methodName.equals("*")) {
+      GreatMap.INSTANCE.callerCollectors.keySet().stream()
+          .filter(callee -> callee.owner.equals(self.owner))
+          .forEach(Traceback::searchAndPrintTree);
+      return;
+    }
+    if (self.desc.equals("*")) {
+      GreatMap.INSTANCE.callerCollectors.keySet().stream()
+          .filter(callee -> callee.methodName.equals(self.methodName) && callee.owner.equals(self.owner))
+          .forEach(Traceback::searchAndPrintTree);
+    }
+  }
+
+  static void searchAndPrintTree(Method self) {
+    printTree(searchTree(self, null), 0);
+  }
+
+  static TreeNode searchTree(Method self, TreeNode parent) {
     TreeNode cur = new TreeNode();
     cur.self = self;
     cur.parent = parent;
-    CallerCollector callerCollector = GreatMap.INSTANCE.getCallerCollector(
-        Strings.substringBefore(self.owner, "$"));
-    for (Caller caller : callerCollector.getCallers()) {
+    CallerCollector callerCollector = GreatMap.INSTANCE.getCallerCollector(self);
+    for (Method caller : callerCollector.getCallers()) {
       if (cur.findCycle(caller)) {
         TreeNode cycleEnd = new TreeNode();
         cycleEnd.self = caller;
         cur.callers.add(cycleEnd);
       } else {
-        cur.callers.add(search(caller, cur));
+        cur.callers.add(searchTree(caller, cur));
       }
     }
     return cur;
   }
 
-  public static void printTree(TreeNode node, int depth) {
+  static void printTree(TreeNode node, int depth) {
     char[] indents = new char[depth];
     Arrays.fill(indents, '\t');
     System.out.println(String.valueOf(indents) + node.self);
@@ -34,11 +55,11 @@ public class Traceback {
   }
 
   static class TreeNode {
-    Caller self;
+    Method self;
     TreeNode parent;
     List<TreeNode> callers = new ArrayList<>();
 
-    boolean findCycle(Caller neo) {
+    boolean findCycle(Method neo) {
       TreeNode cur = this;
       while (cur != null) {
         if (neo.equals(cur.self)) {
