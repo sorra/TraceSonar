@@ -1,7 +1,7 @@
 Static analysis on Java class files.
 Supports Java 8 Lambda!
 
-Run the Main class and then it prints the call relations in this project, and generates a "traceback.html" file, showing the callers of class GreatMap.
+Install JDK 8 and Maven. Run the Main class and then it prints the call relations in this project, and generates a "traceback.html" file, showing the callers of class GreatMap.
 
 It's able to trace the method callers until the "main" function, recursion or unreachable libraries.
 
