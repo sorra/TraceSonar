@@ -25,7 +25,7 @@ public class Main {
       else if(arg.equals("-q")) mode = Mode.QUERY;
       else {
         if (mode == Mode.FILE) files.add(arg);
-        else if(mode == Mode.QUERY) queries.add(arg);
+        else if(mode == Mode.QUERY) queries.add(arg.replace("'", ""));
       }
     }
     FileWalker.walkAll(files);
