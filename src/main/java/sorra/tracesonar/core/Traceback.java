@@ -9,15 +9,12 @@ import sorra.tracesonar.model.Method;
 
 public class Traceback {
   private StringBuilder output = new StringBuilder();
-  private BiConsumer<TreeNode, Integer> printer = (node, depth) -> {
-    char[] indents = new char[depth];
-    Arrays.fill(indents, '\t');
-    output.append(String.valueOf(indents) + node.self).append('\n');
-  };
+  private BiConsumer<TreeNode, Integer> printer;
 
   public static CharSequence search(Method self, boolean html) {
     Traceback traceback = new Traceback();
     if (html) {
+      traceback.output.append("<h3>").append(self).append("</h3>\n");
       traceback.printer = (node, depth) -> {
         if (depth == 0) {
           traceback.output.append(String.format(
@@ -28,7 +25,15 @@ public class Traceback {
               node.callers.isEmpty() ? "caller endpoint" : "caller", depth*5, node.self));
         }
       };
+    } else {
+      traceback.output.append(self).append("\n");
+      traceback.printer = (node, depth) -> {
+        char[] indents = new char[depth];
+        Arrays.fill(indents, '\t');
+        traceback.output.append(String.valueOf(indents)).append(node.self).append('\n');
+      };
     }
+    
     if (self.owner.equals("*")) {
       GreatMap.INSTANCE.callerCollectors.keySet().forEach(traceback::searchAndPrintTree);
       return traceback.output;
