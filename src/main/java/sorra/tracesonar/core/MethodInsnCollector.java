@@ -34,10 +34,14 @@ public class MethodInsnCollector {
   }
 
   private ClassVisitor classVisitor = new ClassVisitor(ASM5) {
+    ClassMap.ClassOutline classOutline;
+
     @Override
     public void visit(int version, int access, String name, String signature, String superName, String[] interfaces) {
       className = name;
       topClassName = Strings.substringBefore(className, "$");
+      classOutline = new ClassMap.ClassOutline(superName, interfaces);
+      ClassMap.INSTANCE.addClassOutline(className, classOutline);
     }
 
     @Override
@@ -53,11 +57,12 @@ public class MethodInsnCollector {
     @Override
     public MethodVisitor visitMethod(int access, String name, String desc, String signature, String[] exceptions) {
       Method caller = new Method(className, name, desc);
-      // Also initialize as a free callee
-//      if ((access & Opcodes.ACC_PRIVATE) == 0 // Non-private
-//          && !isIgnore(className, name, desc)) {
-//        GreatMap.INSTANCE.getCallerCollector(caller);
-//      }
+
+      if ((access & Opcodes.ACC_PRIVATE) == 0 // Non-private
+          && !isIgnore(className, name, desc)) {
+        classOutline.addMethod(caller);
+      }
+
       return new MethodVisitor(ASM5) {
         @Override
         public void visitMethodInsn(int opcode, String owner, String name, String desc, boolean itf) {
@@ -65,6 +70,7 @@ public class MethodInsnCollector {
 //            return;
 //          }
           if (isIgnore(owner, name, desc)) return;
+
           GreatMap.INSTANCE.getCallerCollector(new Method(owner, name, desc)).regCaller(caller);
           calledClasses.add(owner);
         }
@@ -90,11 +96,11 @@ public class MethodInsnCollector {
   };
 
   private static boolean isIgnore(String owner, String name, String desc) {
-    for (String pkg : IGNORE_PACKAGE) { // Ignore basic libraries
-      if (owner.startsWith(pkg)) {
-        return true;
-      }
-    }
+//    for (String pkg : IGNORE_PACKAGE) { // Ignore basic libraries
+//      if (owner.startsWith(pkg)) {
+//        return true;
+//      }
+//    }
     for (Pair<String, String> meth : IGNORE_METHODS) { // Ignore Object methods
       if (meth._1.equals(name) && meth._2.equals(desc)) {
         return true;

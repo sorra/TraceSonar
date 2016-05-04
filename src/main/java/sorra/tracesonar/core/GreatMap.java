@@ -4,6 +4,7 @@ import java.util.Map;
 import java.util.Optional;
 
 import sorra.tracesonar.model.Method;
+import sorra.tracesonar.sample.Subclass;
 
 public class GreatMap {
   public static final GreatMap INSTANCE = new GreatMap();

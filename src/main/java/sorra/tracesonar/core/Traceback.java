@@ -3,13 +3,12 @@ package sorra.tracesonar.core;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
-import java.util.function.BiConsumer;
 
 import sorra.tracesonar.model.Method;
 
 public class Traceback {
   private StringBuilder output = new StringBuilder();
-  private BiConsumer<TreeNode, Integer> printer;
+  private Printer printer;
 
   public static CharSequence search(Method self, boolean html) {
     Traceback traceback = new Traceback();
@@ -20,9 +19,12 @@ public class Traceback {
           traceback.output.append(String.format(
               "<div class=\"queried\">%s</div>\n", node.self));
         } else {
+          String cssClass = "caller";
+          if (node.callers.isEmpty()) cssClass += " endpoint";
+          if (node.isCallingSuper) cssClass += " potential";
+
           traceback.output.append(String.format(
-              "<div class=\"%s\" style=\"margin-left:%dem\">%s</div>\n",
-              node.callers.isEmpty() ? "caller endpoint" : "caller", depth*5, node.self));
+              "<div class=\"%s\" style=\"margin-left:%dem\">%s</div>\n", cssClass, depth*5, node.self));
         }
       };
     } else {
@@ -35,31 +37,43 @@ public class Traceback {
     }
     
     if (self.owner.equals("*")) {
-      GreatMap.INSTANCE.callerCollectors.keySet().forEach(traceback::searchAndPrintTree);
+      ClassMap.INSTANCE.classOutlines.values().forEach(co -> {
+        co.methods.forEach(traceback::searchAndPrintTree);
+      });
       return traceback.output;
     }
     if (self.methodName.equals("*")) {
-      GreatMap.INSTANCE.callerCollectors.keySet().stream()
-          .filter(callee -> callee.owner.equals(self.owner))
+      ClassMap.INSTANCE.classOutlines.get(self.owner).methods.stream()
+          .filter(x -> x.owner.equals(self.owner))
           .forEach(traceback::searchAndPrintTree);
       return traceback.output;
     }
     if (self.desc.equals("*")) {
-      GreatMap.INSTANCE.callerCollectors.keySet().stream()
-          .filter(callee -> callee.methodName.equals(self.methodName) && callee.owner.equals(self.owner))
+      ClassMap.INSTANCE.classOutlines.get(self.owner).methods.stream()
+          .filter(x -> x.methodName.equals(self.methodName) && x.owner.equals(self.owner))
           .forEach(traceback::searchAndPrintTree);
     }
     return traceback.output;
   }
 
   void searchAndPrintTree(Method self) {
-    printTree(searchTree(self, null), 0);
+    TreeNode root = searchTree(self, null, false);
+    if (!root.callers.isEmpty()) printTree(root, 0);
   }
 
-  TreeNode searchTree(Method self, TreeNode parent) {
+  TreeNode searchTree(Method self, TreeNode parent, boolean asSuper) {
     TreeNode cur = new TreeNode();
     cur.self = self;
+    cur.isCallingSuper = asSuper;
     cur.parent = parent;
+    searchCallers(self, cur, false);
+    for (Method superMethod: ClassMap.INSTANCE.findSuperMethods(self)) {
+      searchCallers(superMethod, cur, true);
+    }
+    return cur;
+  }
+
+  private void searchCallers(Method self, TreeNode cur, boolean asSuper) {
     CallerCollector callerCollector = GreatMap.INSTANCE.getCallerCollector(self);
     for (Method caller : callerCollector.getCallers()) {
       if (cur.findCycle(caller)) {
@@ -67,19 +81,20 @@ public class Traceback {
         cycleEnd.self = caller;
         cur.callers.add(cycleEnd);
       } else {
-        cur.callers.add(searchTree(caller, cur));
+        cur.callers.add(searchTree(caller, cur, asSuper));
       }
     }
-    return cur;
   }
 
+
   void printTree(TreeNode node, int depth) {
-    printer.accept(node, depth);
+    printer.print(node, depth);
     node.callers.forEach(c -> printTree(c, depth + 1));
   }
 
   static class TreeNode {
     Method self;
+    boolean isCallingSuper = false; // self is calling the super method of parent
     TreeNode parent;
     List<TreeNode> callers = new ArrayList<>();
 
@@ -93,5 +108,9 @@ public class Traceback {
       }
       return false;
     }
+  }
+
+  private interface Printer {
+    void print(TreeNode node, int depth);
   }
 }

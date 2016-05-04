@@ -34,6 +34,10 @@ public class Method {
 
   @Override
   public String toString() {
-    return "{" + owner + ' ' + methodName + ' ' + desc + '}';
+    String name = methodName;
+    if (methodName.contains("<") || methodName.contains(">")) {
+      name = methodName.replace("<", "&lt;").replace(">", "&gt;");
+    }
+    return String.format("-> %s <u>%s</u> %s", owner, name, desc);
   }
 }
