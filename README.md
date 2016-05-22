@@ -23,4 +23,4 @@ Read the HTML report:
 It should be robust enough. Feel free to try it out!
 
 ###Limitation:
-Now that it can find potential calls (calling a superclass's or interface's method), but those superclasses or interfaces must have themselves' .class files get scanned.
+Now that it can find potential calls (calling a superclass's or interface's method), but the classes folder or jar of those superclasses or interfaces must also be scanned.
