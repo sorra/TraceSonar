@@ -4,8 +4,7 @@ It's able to trace the call hierarchy until "main(args)", recursion or unreachab
 
 ###Quickstart:
 Install JDK 8 and Maven.
-Run in shell:
-`mvn assembly:assembly && java -jar target/tracesonar-0.1-SNAPSHOT.jar -f target/tracesonar-0.1-SNAPSHOT.jar -q 'sorra/tracesonar/core/GreatMap.*'`
+Run the shell script: `./test.sh`  
 Then it prints the call relations in this project, and generates a "traceback.html" file, showing the call hierarchy of class GreatMap.
 > `-f` stands for file paths, `-q` stands for queries such as 'package/class.method' or 'package/class.*'
 
