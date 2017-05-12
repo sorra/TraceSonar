@@ -18,9 +18,7 @@ public class Method {
 
     Method caller = (Method) o;
 
-    if (!methodName.equals(caller.methodName)) return false;
-    if (!owner.equals(caller.owner)) return false;
-    return desc.equals(caller.desc);
+    return methodName.equals(caller.methodName) && owner.equals(caller.owner) && desc.equals(caller.desc);
 
   }
 
@@ -38,6 +36,6 @@ public class Method {
     if (methodName.contains("<") || methodName.contains(">")) {
       name = methodName.replace("<", "&lt;").replace(">", "&gt;");
     }
-    return String.format("-> %s <u>%s</u> %s", owner, name, desc);
+    return String.format("-> %s #%s %s", owner.replace('/', '.'), name, "");
   }
 }

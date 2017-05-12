@@ -38,8 +38,8 @@ public class Main {
 
     StringBuilder allsb = new StringBuilder();
     for (String query : queries) {
-      String[] parts = Strings.splitFirst(query, "."); //type.method
-      CharSequence output = Traceback.search(new Method(parts[0], parts[1], ""), true);
+      String[] parts = Strings.splitFirst(query, "#"); // qualifiedName#method
+      CharSequence output = Traceback.search(new Method(parts[0].replace('.', '/'), parts[1], ""), true);
       allsb.append(output);
     }
 
