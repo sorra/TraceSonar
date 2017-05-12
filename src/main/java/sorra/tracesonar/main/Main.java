@@ -2,13 +2,10 @@ package sorra.tracesonar.main;
 
 import java.io.IOException;
 import java.io.InputStream;
-import java.nio.file.Files;
-import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
 
 import sorra.tracesonar.core.FileWalker;
-import sorra.tracesonar.core.GreatMap;
 import sorra.tracesonar.core.Traceback;
 import sorra.tracesonar.model.Method;
 import sorra.tracesonar.util.FileOutput;
@@ -39,7 +36,7 @@ public class Main {
     StringBuilder allsb = new StringBuilder();
     for (String query : queries) {
       String[] parts = Strings.splitFirst(query, "#"); // qualifiedName#method
-      CharSequence output = Traceback.search(new Method(parts[0].replace('.', '/'), parts[1], ""), true);
+      CharSequence output = Traceback.run(new Method(parts[0].replace('.', '/'), parts[1], ""), true);
       allsb.append(output);
     }
 

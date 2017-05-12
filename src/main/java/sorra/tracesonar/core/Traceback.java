@@ -3,6 +3,8 @@ package sorra.tracesonar.core;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import sorra.tracesonar.model.Method;
 
@@ -10,7 +12,15 @@ public class Traceback {
   private StringBuilder output = new StringBuilder();
   private Printer printer;
 
-  public static CharSequence search(Method self, boolean html) {
+  public static CharSequence run(Method self, boolean html) {
+    Traceback traceback = getInstance(self, html);
+
+    search(self, traceback);
+
+    return traceback.output;
+  }
+
+  private static Traceback getInstance(Method self, boolean html) {
     Traceback traceback = new Traceback();
     if (html) {
       traceback.output.append("<h3>").append(self).append("</h3>\n");
@@ -35,33 +45,42 @@ public class Traceback {
         traceback.output.append(String.valueOf(indents)).append(node.self).append('\n');
       };
     }
-    
-    if (self.owner.equals("*")) {
-      ClassMap.INSTANCE.classOutlines.values().forEach(co -> {
-        co.methods.forEach(traceback::searchAndPrintTree);
-      });
-      return traceback.output;
-    }
-    if (self.methodName.equals("*")) {
-      ClassMap.INSTANCE.classOutlines.get(self.owner).methods.stream()
-          .filter(x -> x.owner.equals(self.owner))
-          .forEach(traceback::searchAndPrintTree);
-      return traceback.output;
-    }
-    if (self.desc.equals("*")) {
-      ClassMap.INSTANCE.classOutlines.get(self.owner).methods.stream()
-          .filter(x -> x.methodName.equals(self.methodName) && x.owner.equals(self.owner))
-          .forEach(traceback::searchAndPrintTree);
-    }
-    return traceback.output;
+    return traceback;
   }
 
-  void searchAndPrintTree(Method self) {
-    TreeNode root = searchTree(self, null, false);
+  private static void search(Method self, Traceback traceback) {
+    Stream<TreeNode> nodeStream;
+    if (self.owner.equals("*")) {
+      nodeStream = ClassMap.INSTANCE.classOutlines.values().stream()
+          .flatMap(co -> co.methods.stream())
+          .map(traceback::searchTree);
+    } else if (self.methodName.equals("*")) {
+      nodeStream = ClassMap.INSTANCE.classOutlines.get(self.owner).methods.stream()
+          .filter(x -> x.owner.equals(self.owner))
+          .map(traceback::searchTree);
+    } else if (self.desc.equals("*")) {
+      nodeStream = ClassMap.INSTANCE.classOutlines.get(self.owner).methods.stream()
+          .filter(x -> x.methodName.equals(self.methodName) && x.owner.equals(self.owner))
+          .map(traceback::searchTree);
+    } else {
+      throw new RuntimeException();
+    }
+
+    //Separate two stages to help debug
+    nodeStream
+        .collect(Collectors.toList())
+        .forEach(traceback::printTree);
+  }
+
+  TreeNode searchTree(Method method) {
+    return searchTree(method, null, false);
+  }
+
+  private void printTree(TreeNode root) {
     if (!root.callers.isEmpty()) printTree(root, 0);
   }
 
-  TreeNode searchTree(Method self, TreeNode parent, boolean asSuper) {
+  private TreeNode searchTree(Method self, TreeNode parent, boolean asSuper) {
     TreeNode cur = new TreeNode();
     cur.self = self;
     cur.isCallingSuper = asSuper;
@@ -87,7 +106,7 @@ public class Traceback {
   }
 
 
-  void printTree(TreeNode node, int depth) {
+  private void printTree(TreeNode node, int depth) {
     printer.print(node, depth);
     node.callers.forEach(c -> printTree(c, depth + 1));
   }
