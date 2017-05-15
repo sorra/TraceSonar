@@ -21,6 +21,7 @@ public class Main {
     List<String> ignores = new ArrayList<>();
 
     for (String arg : args) {
+      arg = arg.trim();
       if (arg.equals("-f")) option = Option.FILE;
       else if (arg.equals("-q")) option = Option.QUERY;
       else if (arg.equals("-p")) option = Option.POTENTIAL;
