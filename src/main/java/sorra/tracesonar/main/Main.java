@@ -14,15 +14,19 @@ import sorra.tracesonar.util.Strings;
 
 public class Main {
   public static void main(String[] args) throws IOException {
-    Mode mode = null;
+    Option option = null;
     List<String> files = new ArrayList<>();
     List<String> queries = new ArrayList<>();
+    boolean potential = true;
+
     for (String arg : args) {
-      if (arg.equals("-f")) mode = Mode.FILE;
-      else if(arg.equals("-q")) mode = Mode.QUERY;
+      if (arg.equals("-f")) option = Option.FILE;
+      else if (arg.equals("-q")) option = Option.QUERY;
+      else if (arg.equals("-p")) option = Option.POTENTIAL;
       else {
-        if (mode == Mode.FILE) files.add(arg);
-        else if(mode == Mode.QUERY) queries.add(arg.replace("'", ""));
+        if (option == Option.FILE) files.add(arg);
+        else if (option == Option.QUERY) queries.add(arg.replace("'", ""));
+        else if (option == Option.POTENTIAL) potential = Boolean.valueOf(arg);
       }
     }
     FileWalker.walkAll(files);
@@ -36,7 +40,9 @@ public class Main {
     StringBuilder allsb = new StringBuilder();
     for (String query : queries) {
       String[] parts = Strings.splitFirst(query, "#"); // qualifiedName#method
-      CharSequence output = Traceback.run(new Method(parts[0].replace('.', '/'), parts[1], ""), true);
+      String qClassName = parts[0].replace('.', '/');
+      String methodName = parts.length >= 2 ? parts[1] : "*";
+      CharSequence output = Traceback.getInstance(potential, true).run(new Method(qClassName, methodName, "*"));
       allsb.append(output);
     }
 
@@ -47,7 +53,7 @@ public class Main {
     System.out.println("\nTraceback: traceback.html\n");
   }
 
-  enum Mode {
-    FILE, QUERY
+  enum Option {
+    FILE, QUERY, POTENTIAL
   }
 }

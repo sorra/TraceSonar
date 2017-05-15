@@ -3,6 +3,7 @@ package sorra.tracesonar.core;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -10,20 +11,25 @@ import sorra.tracesonar.model.Method;
 
 public class Traceback {
   private StringBuilder output = new StringBuilder();
+  private boolean isHtml;
   private Printer printer;
+  private boolean includePotentialCalls;
 
-  public static CharSequence run(Method self, boolean html) {
-    Traceback traceback = getInstance(self, html);
+  public CharSequence run(Method self) {
+    if (isHtml) output.append("<h3>").append(self).append("</h3>\n");
+    else output.append(self).append("\n");
 
-    search(self, traceback);
+    search(self, this);
 
-    return traceback.output;
+    return output;
   }
 
-  private static Traceback getInstance(Method self, boolean html) {
+  public static Traceback getInstance(boolean includePotentialCalls, boolean html) {
     Traceback traceback = new Traceback();
+    traceback.isHtml = true;
+    traceback.includePotentialCalls = includePotentialCalls;
+
     if (html) {
-      traceback.output.append("<h3>").append(self).append("</h3>\n");
       traceback.printer = (node, depth) -> {
         if (depth == 0) {
           traceback.output.append(String.format(
@@ -38,13 +44,13 @@ public class Traceback {
         }
       };
     } else {
-      traceback.output.append(self).append("\n");
       traceback.printer = (node, depth) -> {
         char[] indents = new char[depth];
         Arrays.fill(indents, '\t');
         traceback.output.append(String.valueOf(indents)).append(node.self).append('\n');
       };
     }
+
     return traceback;
   }
 
@@ -55,11 +61,11 @@ public class Traceback {
           .flatMap(co -> co.methods.stream())
           .map(traceback::searchTree);
     } else if (self.methodName.equals("*")) {
-      nodeStream = ClassMap.INSTANCE.classOutlines.get(self.owner).methods.stream()
+      nodeStream = getClassOutline(self).methods.stream()
           .filter(x -> x.owner.equals(self.owner))
           .map(traceback::searchTree);
     } else if (self.desc.equals("*")) {
-      nodeStream = ClassMap.INSTANCE.classOutlines.get(self.owner).methods.stream()
+      nodeStream = getClassOutline(self).methods.stream()
           .filter(x -> x.methodName.equals(self.methodName) && x.owner.equals(self.owner))
           .map(traceback::searchTree);
     } else {
@@ -72,7 +78,15 @@ public class Traceback {
         .forEach(traceback::printTree);
   }
 
-  TreeNode searchTree(Method method) {
+  private static ClassMap.ClassOutline getClassOutline(Method self) {
+    ClassMap.ClassOutline classOutline = ClassMap.INSTANCE.classOutlines.get(self.owner);
+    if (classOutline == null) {
+      throw new RuntimeException("Cannot find class: " + self.owner.replace('/', '.'));
+    }
+    return  classOutline;
+  }
+
+  private TreeNode searchTree(Method method) {
     return searchTree(method, null, false);
   }
 
@@ -81,26 +95,31 @@ public class Traceback {
   }
 
   private TreeNode searchTree(Method self, TreeNode parent, boolean asSuper) {
-    TreeNode cur = new TreeNode();
-    cur.self = self;
-    cur.isCallingSuper = asSuper;
-    cur.parent = parent;
-    searchCallers(self, cur, false);
-    for (Method superMethod: ClassMap.INSTANCE.findSuperMethods(self)) {
-      searchCallers(superMethod, cur, true);
+    TreeNode cur = new TreeNode(self, asSuper, parent);
+    searchCallers(cur, false);
+
+    if (includePotentialCalls) {
+      for (Method superMethod : ClassMap.INSTANCE.findSuperMethods(self)) {
+        TreeNode superCur = new TreeNode(superMethod, asSuper, parent);
+        searchCallers(superCur, true);
+      }
     }
+
     return cur;
   }
 
-  private void searchCallers(Method self, TreeNode cur, boolean asSuper) {
-    CallerCollector callerCollector = GreatMap.INSTANCE.getCallerCollector(self);
-    for (Method caller : callerCollector.getCallers()) {
+  private void searchCallers(TreeNode cur, boolean asSuper) {
+    Set<Method> callers = GreatMap.INSTANCE.getCallerCollector(cur.self).getCallers();
+    if (cur.parent != null) {
+      cur.parent.callers.add(cur);
+    }
+
+    for (Method caller : callers) {
       if (cur.findCycle(caller)) {
-        TreeNode cycleEnd = new TreeNode();
-        cycleEnd.self = caller;
+        TreeNode cycleEnd = new TreeNode(caller, asSuper, cur);
         cur.callers.add(cycleEnd);
       } else {
-        cur.callers.add(searchTree(caller, cur, asSuper));
+        searchTree(caller, cur, asSuper);
       }
     }
   }
@@ -117,15 +136,44 @@ public class Traceback {
     TreeNode parent;
     List<TreeNode> callers = new ArrayList<>();
 
+    public TreeNode(Method self, boolean isCallingSuper, TreeNode parent) {
+      this.self = self;
+      this.isCallingSuper = isCallingSuper;
+      this.parent = parent;
+    }
+
     boolean findCycle(Method neo) {
-      TreeNode cur = this;
+      if (self.equals(neo)) {
+        return true;
+      }
+
+      TreeNode cur = parent;
       while (cur != null) {
-        if (neo.equals(cur.self)) {
+        if (cur.self.equals(neo) || cur.callers.stream().anyMatch(x -> x.self.equals(neo))) {
           return true;
         }
         cur = cur.parent;
       }
       return false;
+    }
+
+    @Override
+    public String toString() {
+      StringBuilder sb = new StringBuilder();
+
+      TreeNode cur = this;
+      int depth = 0;
+      do {
+        sb.append(depth);
+        for (int i = 0; i < depth; i++) {
+          sb.append("  ");
+        }
+        sb.append(cur.self).append('\n');
+        cur = cur.parent;
+        depth++;
+      } while (cur != null);
+
+      return sb.toString();
     }
   }
 

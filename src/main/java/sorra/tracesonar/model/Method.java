@@ -36,6 +36,6 @@ public class Method {
     if (methodName.contains("<") || methodName.contains(">")) {
       name = methodName.replace("<", "&lt;").replace(">", "&gt;");
     }
-    return String.format("-> %s #%s %s", owner.replace('/', '.'), name, "");
+    return String.format("<- %s #%s %s", owner.replace('/', '.'), name, desc);
   }
 }
