@@ -1,1 +1,1 @@
-mvn assembly:assembly && java -jar target/tracesonar-0.1-SNAPSHOT.jar -f target/tracesonar-0.1-SNAPSHOT.jar -q 'sorra.tracesonar.core.GreatMap#*'
+mvn assembly:assembly && java -jar target/tracesonar-0.1-SNAPSHOT.jar -f target/tracesonar-0.1-SNAPSHOT.jar -q "sorra.tracesonar.core.GreatMap#*"

@@ -81,7 +81,7 @@ public class Traceback {
   private static ClassMap.ClassOutline getClassOutline(Method self) {
     ClassMap.ClassOutline classOutline = ClassMap.INSTANCE.classOutlines.get(self.owner);
     if (classOutline == null) {
-      throw new RuntimeException("Cannot find class: " + self.owner.replace('/', '.'));
+      throw new RuntimeException("Cannot find class: " + self.owner);
     }
     return  classOutline;
   }
@@ -109,11 +109,11 @@ public class Traceback {
   }
 
   private void searchCallers(TreeNode cur, boolean asSuper) {
-    Set<Method> callers = GreatMap.INSTANCE.getCallerCollector(cur.self).getCallers();
     if (cur.parent != null) {
       cur.parent.callers.add(cur);
     }
 
+    Set<Method> callers = GreatMap.INSTANCE.getCallerCollector(cur.self).getCallers();
     for (Method caller : callers) {
       if (cur.findCycle(caller)) {
         TreeNode cycleEnd = new TreeNode(caller, asSuper, cur);

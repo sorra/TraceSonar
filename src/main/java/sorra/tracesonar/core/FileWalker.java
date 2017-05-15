@@ -17,12 +17,12 @@ import java.util.jar.JarFile;
 import sorra.tracesonar.util.FileUtil;
 
 public class FileWalker {
-  public static void walkAll(Collection<String> files) {
+  public static void walkAll(Collection<String> files, Collection<String> ignores) {
     try {
       ExecutorService es = Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors());
       Consumer<InputStream> submitter = in -> es.submit(() -> {
         try (InputStream classInput = in) {
-          GreatMap.INSTANCE.addMethodInsnCollector(new MethodInsnCollector(classInput));
+          GreatMap.INSTANCE.addMethodInsnCollector(new MethodInsnCollector(classInput, ignores));
         } catch (IOException e) {
           throw new UncheckedIOException(e);
         }

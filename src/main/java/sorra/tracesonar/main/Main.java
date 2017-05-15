@@ -18,18 +18,21 @@ public class Main {
     List<String> files = new ArrayList<>();
     List<String> queries = new ArrayList<>();
     boolean potential = true;
+    List<String> ignores = new ArrayList<>();
 
     for (String arg : args) {
       if (arg.equals("-f")) option = Option.FILE;
       else if (arg.equals("-q")) option = Option.QUERY;
       else if (arg.equals("-p")) option = Option.POTENTIAL;
+      else if (arg.equals("-i")) option = Option.IGNORE;
       else {
         if (option == Option.FILE) files.add(arg);
-        else if (option == Option.QUERY) queries.add(arg.replace("'", ""));
+        else if (option == Option.QUERY) queries.add(arg);
         else if (option == Option.POTENTIAL) potential = Boolean.valueOf(arg);
+        else if (option == Option.IGNORE) ignores.add(arg.replace('.', '/'));
       }
     }
-    FileWalker.walkAll(files);
+    FileWalker.walkAll(files, ignores);
 
 //    System.out.println("Collected callers:\n");
 //    GreatMap.INSTANCE.callerCollectors.forEach((s, callerCollector) -> {
@@ -54,6 +57,6 @@ public class Main {
   }
 
   enum Option {
-    FILE, QUERY, POTENTIAL
+    FILE, QUERY, POTENTIAL, IGNORE
   }
 }

@@ -3,6 +3,7 @@ package sorra.tracesonar.core;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.UncheckedIOException;
+import java.util.Collection;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -14,12 +15,16 @@ import sorra.tracesonar.util.Strings;
 import static org.objectweb.asm.Opcodes.ASM5;
 
 public class MethodInsnCollector {
+  private Collection<String> ignores;
+
   private String className;
   private Set<String> calledClasses = new HashSet<>();
 
   private String topClassName;
 
-  public MethodInsnCollector(InputStream classInput) {
+  public MethodInsnCollector(InputStream classInput, Collection<String> ignores) {
+    this.ignores = ignores;
+
     ClassReader classReader;
     try {
       classReader = new ClassReader(classInput);
@@ -95,7 +100,7 @@ public class MethodInsnCollector {
     }
   };
 
-  private static boolean isIgnore(String owner, String name, String desc) {
+  private boolean isIgnore(String owner, String name, String desc) {
 //    for (String pkg : IGNORE_PACKAGE) { // Ignore basic libraries
 //      if (owner.startsWith(pkg)) {
 //        return true;
@@ -106,6 +111,13 @@ public class MethodInsnCollector {
         return true;
       }
     }
+
+    if (ignores.stream().anyMatch(
+        x -> owner.startsWith(x) && (owner.length() == x.length() || owner.charAt(x.length()) == '/')
+    )) { // Ignore custom path prefixes
+      return true;
+    }
+
     return false;
   }
 
