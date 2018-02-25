@@ -21,8 +21,8 @@ public class Traceback {
     this.includePotentialCalls = includePotentialCalls;
 
     if (isHtml) {
-      printer = (node, depth) -> {
-        if (depth == 0) {
+      printer = node -> {
+        if (node.depth == 0) {
           output.append(String.format(
               "<div class=\"queried\">%s</div>\n", node.self));
         } else {
@@ -31,12 +31,12 @@ public class Traceback {
           if (node.isCallingSuper) cssClass += " potential";
 
           output.append(String.format(
-              "<div class=\"%s\" style=\"margin-left:%dem\">%s</div>\n", cssClass, depth*5, node.self));
+              "<div class=\"%s\" style=\"margin-left:%dem\">%s</div>\n", cssClass, node.depth * 5, node.self));
         }
       };
     } else {
-      printer = (node, depth) -> {
-        char[] indents = new char[depth];
+      printer = node -> {
+        char[] indents = new char[node.depth];
         Arrays.fill(indents, '\t');
         output.append(String.valueOf(indents)).append(node.self).append('\n');
       };
@@ -88,10 +88,6 @@ public class Traceback {
     return searchTree(method, null, false);
   }
 
-  private void printTree(TreeNode root) {
-    if (!root.callers.isEmpty()) printTree(root, 0);
-  }
-
   private TreeNode searchTree(Method self, TreeNode parent, boolean asSuper) {
     TreeNode cur = new TreeNode(self, asSuper, parent);
     searchCallers(cur, false);
@@ -123,10 +119,9 @@ public class Traceback {
     }
   }
 
-
-  private void printTree(TreeNode node, int depth) {
-    printer.print(node, depth);
-    node.callers.forEach(c -> printTree(c, depth + 1));
+  private void printTree(TreeNode node) {
+    printer.print(node);
+    node.callers.forEach(this::printTree);
   }
 
   private static class TreeNode {
@@ -168,15 +163,13 @@ public class Traceback {
       StringBuilder sb = new StringBuilder();
 
       TreeNode cur = this;
-      int depth = 0;
       do {
-        sb.append(depth);
-        for (int i = 0; i < depth; i++) {
+        sb.append(cur.depth);
+        for (int i = 0; i < cur.depth; i++) {
           sb.append("  ");
         }
         sb.append(cur.self).append('\n');
         cur = cur.parent;
-        depth++;
       } while (cur != null);
 
       return sb.toString();
@@ -184,6 +177,6 @@ public class Traceback {
   }
 
   private interface Printer {
-    void print(TreeNode node, int depth);
+    void print(TreeNode node);
   }
 }

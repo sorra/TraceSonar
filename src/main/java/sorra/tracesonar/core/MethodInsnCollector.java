@@ -83,8 +83,13 @@ public class MethodInsnCollector {
         @Override
         public void visitInvokeDynamicInsn(String name, String desc, Handle bsm, Object... bsmArgs) {
           Handle handle = findInvokedHandle(bsmArgs);
-          if (handle == null) return;
-          if (isIgnore(handle.getOwner(), handle.getName(), handle.getDesc())) return;
+          if (handle == null) {
+            return;
+          }
+          if (isIgnore(handle.getOwner(), handle.getName(), handle.getDesc())) {
+            return;
+          }
+
           GreatMap.INSTANCE.getCallerCollector(new Method(handle.getOwner(), handle.getName(), handle.getDesc()))
               .regCaller(caller);
           calledClasses.add(handle.getOwner());
@@ -112,22 +117,18 @@ public class MethodInsnCollector {
       }
     }
 
-    if (ignores.stream().anyMatch(
+    return ignores.stream().anyMatch(
         x -> owner.startsWith(x) && (owner.length() == x.length() || owner.charAt(x.length()) == '/')
-    )) { // Ignore custom path prefixes
-      return true;
-    }
-
-    return false;
+    );
   }
 
-  private static Set<String> IGNORE_PACKAGE = new HashSet<>();
+  private static final Set<String> IGNORE_PACKAGE = new HashSet<>();
   static {
     IGNORE_PACKAGE.add("java/");
     IGNORE_PACKAGE.add("sun/");
     IGNORE_PACKAGE.add("com/sun/");
   }
-  private static Set<Pair<String, String>> IGNORE_METHODS = new HashSet<>();
+  private static final Set<Pair<String, String>> IGNORE_METHODS = new HashSet<>();
   static {
     IGNORE_METHODS.add(Pair.of("equals", "(Ljava/lang/Object;)Z"));
     IGNORE_METHODS.add(Pair.of("hashCode", "I"));

@@ -21,7 +21,7 @@ import sorra.tracesonar.util.FileUtil;
 public class FileWalker {
 
   public static void walkAll(Collection<String> roots, Collection<String> ignores) {
-    walkAll(roots, ignores, (path, inputStream) -> {
+    walkAll(roots, (path, inputStream) -> {
       try (InputStream classInput = inputStream) {
         GreatMap.INSTANCE.addMethodInsnCollector(new MethodInsnCollector(classInput, ignores));
       } catch (IOException e) {
@@ -30,7 +30,7 @@ public class FileWalker {
     });
   }
 
-  public static void walkAll(Collection<String> roots, Collection<String> ignores, BiConsumer<Path, InputStream> consumer) {
+  private static void walkAll(Collection<String> roots, BiConsumer<Path, InputStream> consumer) {
     try {
       for (String root : roots) {
         Path rootPath = Paths.get(root);
