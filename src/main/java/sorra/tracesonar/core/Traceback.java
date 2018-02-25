@@ -10,10 +10,38 @@ import java.util.stream.Stream;
 import sorra.tracesonar.model.Method;
 
 public class Traceback {
-  private StringBuilder output = new StringBuilder();
   private boolean isHtml;
-  private Printer printer;
   private boolean includePotentialCalls;
+
+  private Printer printer;
+  private StringBuilder output = new StringBuilder();
+
+  public Traceback(boolean isHtml, boolean includePotentialCalls) {
+    this.isHtml = isHtml;
+    this.includePotentialCalls = includePotentialCalls;
+
+    if (isHtml) {
+      printer = (node, depth) -> {
+        if (depth == 0) {
+          output.append(String.format(
+              "<div class=\"queried\">%s</div>\n", node.self));
+        } else {
+          String cssClass = "caller";
+          if (node.callers.isEmpty()) cssClass += " endpoint";
+          if (node.isCallingSuper) cssClass += " potential";
+
+          output.append(String.format(
+              "<div class=\"%s\" style=\"margin-left:%dem\">%s</div>\n", cssClass, depth*5, node.self));
+        }
+      };
+    } else {
+      printer = (node, depth) -> {
+        char[] indents = new char[depth];
+        Arrays.fill(indents, '\t');
+        output.append(String.valueOf(indents)).append(node.self).append('\n');
+      };
+    }
+  }
 
   public CharSequence run(Method self) {
     if (isHtml) output.append("<h3>").append(self).append("</h3>\n");
@@ -22,36 +50,6 @@ public class Traceback {
     search(self);
 
     return output;
-  }
-
-  public static Traceback getInstance(boolean includePotentialCalls, boolean html) {
-    Traceback traceback = new Traceback();
-    traceback.isHtml = true;
-    traceback.includePotentialCalls = false;
-
-    if (html) {
-      traceback.printer = (node, depth) -> {
-        if (depth == 0) {
-          traceback.output.append(String.format(
-              "<div class=\"queried\">%s</div>\n", node.self));
-        } else {
-          String cssClass = "caller";
-          if (node.callers.isEmpty()) cssClass += " endpoint";
-          if (node.isCallingSuper) cssClass += " potential";
-
-          traceback.output.append(String.format(
-              "<div class=\"%s\" style=\"margin-left:%dem\">%s</div>\n", cssClass, depth*5, node.self));
-        }
-      };
-    } else {
-      traceback.printer = (node, depth) -> {
-        char[] indents = new char[depth];
-        Arrays.fill(indents, '\t');
-        traceback.output.append(String.valueOf(indents)).append(node.self).append('\n');
-      };
-    }
-
-    return traceback;
   }
 
   private void search(Method self) {
@@ -98,6 +96,7 @@ public class Traceback {
     TreeNode cur = new TreeNode(self, asSuper, parent);
     searchCallers(cur, false);
 
+    //TODO if cur.depth < k (configurable)
     if (includePotentialCalls) {
       for (Method superMethod : ClassMap.INSTANCE.findSuperMethods(self)) {
         TreeNode superCur = new TreeNode(superMethod, asSuper, parent);
@@ -130,16 +129,23 @@ public class Traceback {
     node.callers.forEach(c -> printTree(c, depth + 1));
   }
 
-  static class TreeNode {
+  private static class TreeNode {
     Method self;
     boolean isCallingSuper; // self is calling the super method of parent
     TreeNode parent;
+    int depth;
     List<TreeNode> callers = new ArrayList<>();
 
     TreeNode(Method self, boolean isCallingSuper, TreeNode parent) {
       this.self = self;
       this.isCallingSuper = isCallingSuper;
       this.parent = parent;
+
+      if (parent == null) {
+        depth = 0;
+      } else {
+        depth = parent.depth + 1;
+      }
     }
 
     boolean findCycle(Method neo) {

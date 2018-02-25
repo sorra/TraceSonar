@@ -46,7 +46,7 @@ public class Main {
       String[] parts = Strings.splitFirst(query, "#"); // qualifiedName#method
       String qClassName = parts[0].replace('.', '/');
       String methodName = parts.length >= 2 ? parts[1] : "*";
-      CharSequence output = Traceback.getInstance(potential, true).run(new Method(qClassName, methodName, "*"));
+      CharSequence output = new Traceback(potential, true).run(new Method(qClassName, methodName, "*"));
       allsb.append(output);
     }
 
