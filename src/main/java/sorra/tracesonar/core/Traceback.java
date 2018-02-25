@@ -19,7 +19,7 @@ public class Traceback {
     if (isHtml) output.append("<h3>").append(self).append("</h3>\n");
     else output.append(self).append("\n");
 
-    search(self, this);
+    search(self);
 
     return output;
   }
@@ -27,7 +27,7 @@ public class Traceback {
   public static Traceback getInstance(boolean includePotentialCalls, boolean html) {
     Traceback traceback = new Traceback();
     traceback.isHtml = true;
-    traceback.includePotentialCalls = includePotentialCalls;
+    traceback.includePotentialCalls = false;
 
     if (html) {
       traceback.printer = (node, depth) -> {
@@ -54,20 +54,20 @@ public class Traceback {
     return traceback;
   }
 
-  private static void search(Method self, Traceback traceback) {
+  private void search(Method self) {
     Stream<TreeNode> nodeStream;
     if (self.owner.equals("*")) {
       nodeStream = ClassMap.INSTANCE.classOutlines.values().stream()
           .flatMap(co -> co.methods.stream())
-          .map(traceback::searchTree);
+          .map(this::searchTree);
     } else if (self.methodName.equals("*")) {
       nodeStream = getClassOutline(self).methods.stream()
           .filter(x -> x.owner.equals(self.owner))
-          .map(traceback::searchTree);
+          .map(this::searchTree);
     } else if (self.desc.equals("*")) {
       nodeStream = getClassOutline(self).methods.stream()
           .filter(x -> x.methodName.equals(self.methodName) && x.owner.equals(self.owner))
-          .map(traceback::searchTree);
+          .map(this::searchTree);
     } else {
       throw new RuntimeException();
     }
@@ -75,7 +75,7 @@ public class Traceback {
     //Separate two stages to help debug
     nodeStream
         .collect(Collectors.toList())
-        .forEach(traceback::printTree);
+        .forEach(this::printTree);
   }
 
   private static ClassMap.ClassOutline getClassOutline(Method self) {
@@ -132,11 +132,11 @@ public class Traceback {
 
   static class TreeNode {
     Method self;
-    boolean isCallingSuper = false; // self is calling the super method of parent
+    boolean isCallingSuper; // self is calling the super method of parent
     TreeNode parent;
     List<TreeNode> callers = new ArrayList<>();
 
-    public TreeNode(Method self, boolean isCallingSuper, TreeNode parent) {
+    TreeNode(Method self, boolean isCallingSuper, TreeNode parent) {
       this.self = self;
       this.isCallingSuper = isCallingSuper;
       this.parent = parent;
