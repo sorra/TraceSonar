@@ -9,6 +9,7 @@ import java.util.stream.Stream;
 
 import sorra.tracesonar.model.Method;
 
+//TODO the tree building is not functional style, thus very hard to understand
 public class Traceback {
   private boolean isHtml;
   private boolean includePotentialCalls;
@@ -105,14 +106,18 @@ public class Traceback {
 
   private void searchCallers(TreeNode cur, boolean asSuper) {
     if (cur.parent != null) {
-      cur.parent.callers.add(cur);
+      if (cur.parent.findCycle(cur.self)) {
+        cur.parent.addCycleEnd(cur.self, asSuper);
+        return;
+      } else {
+        cur.parent.callers.add(cur);
+      }
     }
 
     Set<Method> callers = GreatMap.INSTANCE.getCallerCollector(cur.self).getCallers();
     for (Method caller : callers) {
       if (cur.findCycle(caller)) {
-        TreeNode cycleEnd = new TreeNode(caller, asSuper, cur);
-        cur.callers.add(cycleEnd);
+        cur.addCycleEnd(caller, asSuper);
       } else {
         searchTree(caller, cur, asSuper);
       }
@@ -144,18 +149,20 @@ public class Traceback {
     }
 
     boolean findCycle(Method neo) {
-      if (self.equals(neo)) {
-        return true;
-      }
-
-      TreeNode cur = parent;
-      while (cur != null) {
+      TreeNode cur = this;
+      do {
         if (cur.self.equals(neo) || cur.callers.stream().anyMatch(x -> x.self.equals(neo))) {
           return true;
         }
         cur = cur.parent;
-      }
+      } while (cur != null);
+
       return false;
+    }
+
+    void addCycleEnd(Method caller, boolean asSuper) {
+      TreeNode cycleEnd = new TreeNode(caller, asSuper, this);
+      callers.add(cycleEnd);
     }
 
     @Override
