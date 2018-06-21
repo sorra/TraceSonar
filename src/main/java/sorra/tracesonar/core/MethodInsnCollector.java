@@ -10,7 +10,7 @@ import java.util.Set;
 import org.objectweb.asm.*;
 import sorra.tracesonar.model.Method;
 import sorra.tracesonar.util.Pair;
-import sorra.tracesonar.util.Strings;
+import sorra.tracesonar.util.StringUtil;
 
 import static org.objectweb.asm.Opcodes.ASM5;
 
@@ -44,7 +44,7 @@ public class MethodInsnCollector {
     @Override
     public void visit(int version, int access, String name, String signature, String superName, String[] interfaces) {
       className = name;
-      topClassName = Strings.substringBefore(className, "$");
+      topClassName = StringUtil.substringBefore(className, "$");
       classOutline = new ClassMap.ClassOutline(superName, interfaces);
       ClassMap.INSTANCE.addClassOutline(className, classOutline);
     }
