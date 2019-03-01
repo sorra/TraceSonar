@@ -31,6 +31,8 @@ public class Main {
 //    });
 
     boolean potential = parser.getOptionValues(ArgsParser.Option.POTENTIAL).contains("true");
+    System.out.println("potential=" + potential);
+
     List<String> queries = parser.getOptionValues(ArgsParser.Option.QUERY);
 
     StringBuilder allsb = new StringBuilder();

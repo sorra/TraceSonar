@@ -6,7 +6,7 @@ It's able to trace the call hierarchy until the program entrance, recursion or u
 Install JDK 8 and Maven.
 Try the shell script: `./test.sh`
 Then it prints the call relations in this project, and generates a "traceback.html" file, showing the call hierarchy of class GreatMap.
-> `-f` stands for file paths, `-q` stands for queries such as 'com.example.MyClass#myMethod' or 'com.example.MyClass#*'
+> `-f` stands for file paths, `-q` stands for queries such as 'com.example.MyClass#myMethod', 'com.example.MyClass#*' or 'com.example.MyClass'
 
 Read the HTML report:
 - Your queries are tagged \<h3\>.
@@ -22,4 +22,5 @@ Read the HTML report:
 It should be robust enough. Feel free to try it out!
 
 ### Limitation:
-Now that it can find potential calls (calling a superclass's or interface's method), but the classes folder or jar of those superclasses or interfaces must also be scanned.
+- If extremely slow, try assigning it more memory.
+- Now that it can find potential calls (calling a superclass's or interface's method), remember to provide the classes folder or jar containg the superclasses or interfaces.
