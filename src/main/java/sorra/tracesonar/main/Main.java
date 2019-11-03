@@ -2,6 +2,7 @@ package sorra.tracesonar.main;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -22,27 +23,41 @@ public class Main {
         .map(x -> x.replace('.', '/'))
         .collect(Collectors.toList());
 
-    FileWalker.walkAll(files, excludes);
+    {
+      long timeStart = System.currentTimeMillis();
+
+      FileWalker.walkAll(files, excludes);
+
+      long timeCost = System.currentTimeMillis() - timeStart;
+      System.out.println("Walk time cost: " + timeCost);
+    }
 
     boolean potential = parser.getOptionValues(ArgsParser.Option.POTENTIAL).contains("true");
     System.out.println("potential=" + potential);
 
     List<String> queries = parser.getOptionValues(ArgsParser.Option.QUERY);
 
-    StringBuilder allsb = new StringBuilder();
-    for (String query : queries) {
-      // qualifiedName#method
-      String[] parts = StringUtil.splitFirst(query, "#");
-      String qClassName = parts[0].replace('.', '/');
-      String methodName = parts.length >= 2 ? parts[1] : "*";
-      CharSequence output = new Traceback(true, potential).run(new Method(qClassName, methodName, "*"));
-      allsb.append(output);
+    StringBuilder allOutput = new StringBuilder();
+    {
+      long timeStart = System.currentTimeMillis();
+
+      for (String query : queries) {
+        // qualifiedName#method
+        String[] parts = StringUtil.splitFirst(query, "#");
+        String qClassName = parts[0].replace('.', '/');
+        String methodName = parts.length >= 2 ? parts[1] : "*";
+        CharSequence output = new Traceback(true, potential).run(new Method(qClassName, methodName, "*"));
+        allOutput.append(output);
+      }
+
+      long timeCost = System.currentTimeMillis() - timeStart;
+      System.out.println("Search time cost: " + timeCost);
     }
 
     InputStream tmplInput = Main.class.getClassLoader().getResourceAsStream("traceback.html");
     if (tmplInput == null) throw new NullPointerException("tmpl file is not found");
-    String tmpl = new String(FileUtil.read(tmplInput, 300), "UTF-8");
-    FileOutput.writeFile("traceback.html", String.format(tmpl, allsb));
+    String tmpl = new String(FileUtil.read(tmplInput, 300), StandardCharsets.UTF_8);
+    FileOutput.writeFile("traceback.html", String.format(tmpl, allOutput));
     System.out.println("\nTraceback: traceback.html\n");
   }
 }
