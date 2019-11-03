@@ -50,16 +50,6 @@ public class MethodInsnCollector {
     }
 
     @Override
-    public void visitOuterClass(String owner, String name, String desc) {
-      super.visitOuterClass(owner, name, desc);
-    }
-
-    @Override
-    public void visitInnerClass(String name, String outerName, String innerName, int access) {
-      super.visitInnerClass(name, outerName, innerName, access);
-    }
-
-    @Override
     public MethodVisitor visitMethod(int access, String name, String desc, String signature, String[] exceptions) {
       Method caller = new Method(className, name, desc);
 
@@ -76,7 +66,8 @@ public class MethodInsnCollector {
 //          }
           if (isIgnore(owner, name, desc)) return;
 
-          GreatMap.INSTANCE.getCallerCollector(new Method(owner, name, desc)).regCaller(caller);
+          Method callee = new Method(owner, name, desc);
+          GreatMap.INSTANCE.getCallerCollector(callee).addCaller(caller);
           calledClasses.add(owner);
         }
 
@@ -90,8 +81,8 @@ public class MethodInsnCollector {
             return;
           }
 
-          GreatMap.INSTANCE.getCallerCollector(new Method(handle.getOwner(), handle.getName(), handle.getDesc()))
-              .regCaller(caller);
+          Method callee = new Method(handle.getOwner(), handle.getName(), handle.getDesc());
+          GreatMap.INSTANCE.getCallerCollector(callee).addCaller(caller);
           calledClasses.add(handle.getOwner());
         }
 
@@ -111,6 +102,7 @@ public class MethodInsnCollector {
 //        return true;
 //      }
 //    }
+
     for (Pair<String, String> meth : IGNORE_METHODS) { // Ignore Object methods
       if (meth._1.equals(name) && meth._2.equals(desc)) {
         return true;
@@ -122,12 +114,13 @@ public class MethodInsnCollector {
     );
   }
 
-  private static final Set<String> IGNORE_PACKAGE = new HashSet<>();
-  static {
-    IGNORE_PACKAGE.add("java/");
-    IGNORE_PACKAGE.add("sun/");
-    IGNORE_PACKAGE.add("com/sun/");
-  }
+//  private static final Set<String> IGNORE_PACKAGE = new HashSet<>();
+//  static {
+//    IGNORE_PACKAGE.add("java/");
+//    IGNORE_PACKAGE.add("sun/");
+//    IGNORE_PACKAGE.add("com/sun/");
+//  }
+
   private static final Set<Pair<String, String>> IGNORE_METHODS = new HashSet<>();
   static {
     IGNORE_METHODS.add(Pair.of("equals", "(Ljava/lang/Object;)Z"));

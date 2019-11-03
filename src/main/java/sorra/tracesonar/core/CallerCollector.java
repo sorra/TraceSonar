@@ -12,7 +12,7 @@ public class CallerCollector {
     this.self = self;
   }
 
-  public void regCaller(Method caller) {
+  public void addCaller(Method caller) {
     callers.add(caller);
   }
 
