@@ -21,37 +21,52 @@ import sorra.tracesonar.util.FileUtil;
 public class FileWalker {
 
   public static void walkAll(Collection<String> roots, Collection<String> ignores) {
-    walkAll(roots, (path, inputStream) -> {
+    BiConsumer<Path, InputStream> classConsumer = (path, inputStream) -> {
       try (InputStream classInput = inputStream) {
         new MethodInsnCollector(classInput, ignores);
       } catch (IOException e) {
         throw new UncheckedIOException(e);
       }
-    });
+    };
+
+    try {
+      walkAll(roots, classConsumer);
+    } catch (IOException e) {
+      throw new UncheckedIOException(e);
+    }
   }
 
-  private static void walkAll(Collection<String> roots, BiConsumer<Path, InputStream> consumer) {
-    try {
-      for (String root : roots) {
-        Path rootPath = Paths.get(root);
-        if (rootPath.toFile().isDirectory()) {
-          Files.walk(rootPath)
-              .forEach(path -> {
-                String pathStr = path.toString();
-                if (pathStr.endsWith(".class") && !path.toFile().isDirectory()) {
-                  handleClassFile(path, consumer);
-                }
-                if (arSuffixes.stream().anyMatch(pathStr::endsWith)) {
-                  handleJarFile(path, consumer);
-                }
-              });
-        } else {
-          if (arSuffixes.stream().anyMatch(root::endsWith)) {
-            handleJarFile(rootPath, consumer);
-          }
-        }
+  private static void walkAll(Collection<String> roots, BiConsumer<Path, InputStream> consumer) throws IOException {
+    for (String root : roots) {
+      Path rootPath = Paths.get(root);
+
+      if (rootPath.toFile().isDirectory()) {
+        Files.walk(rootPath)
+            .forEach(path -> {
+              if (isClassFile(path)) {
+                handleClassFile(path, consumer);
+              } else if (isJarFile(path)) {
+                handleJarFile(path, consumer);
+              }
+            });
+      } else if (isJarFile(rootPath)) {
+        handleJarFile(rootPath, consumer);
       }
-    } catch (IOException e) {
+    }
+  }
+
+  private static boolean isClassFile(Path path) {
+    return path.toString().endsWith(".class") && !path.toFile().isDirectory();
+  }
+
+  private static boolean isJarFile(Path path) {
+    return AR_SUFFIXES.stream().anyMatch(path.toString()::endsWith);
+  }
+
+  private static void handleClassFile(Path path, BiConsumer<Path, InputStream> submitter) {
+    try {
+      submitter.accept(path, new FileInputStream(path.toFile()));
+    } catch (FileNotFoundException e) {
       throw new UncheckedIOException(e);
     }
   }
@@ -74,13 +89,5 @@ public class FileWalker {
     }
   }
 
-  private static void handleClassFile(Path path, BiConsumer<Path, InputStream> submitter) {
-    try {
-      submitter.accept(path, new FileInputStream(path.toFile()));
-    } catch (FileNotFoundException e) {
-      throw new UncheckedIOException(e);
-    }
-  }
-
-  private static final Collection<String> arSuffixes = Arrays.asList(".jar", ".war", ".ear");
+  private static final Collection<String> AR_SUFFIXES = Arrays.asList(".jar", ".war", ".ear");
 }
