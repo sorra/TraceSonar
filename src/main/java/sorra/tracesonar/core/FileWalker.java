@@ -23,7 +23,7 @@ public class FileWalker {
   public static void walkAll(Collection<String> roots, Collection<String> ignores) {
     walkAll(roots, (path, inputStream) -> {
       try (InputStream classInput = inputStream) {
-        GreatMap.INSTANCE.addMethodInsnCollector(new MethodInsnCollector(classInput, ignores));
+        GraphStore.INSTANCE.addMethodInsnCollector(new MethodInsnCollector(classInput, ignores));
       } catch (IOException e) {
         throw new UncheckedIOException(e);
       }

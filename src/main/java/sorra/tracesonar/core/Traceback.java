@@ -114,7 +114,7 @@ public class Traceback {
       }
     }
 
-    Set<Method> callers = GreatMap.INSTANCE.getCallerCollector(cur.self).getCallers();
+    Set<Method> callers = GraphStore.INSTANCE.getCallerCollector(cur.self).getCallers();
     for (Method caller : callers) {
       if (cur.findCycle(caller)) {
         cur.addCycleEnd(caller, asSuper);

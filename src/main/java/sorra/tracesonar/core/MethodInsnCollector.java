@@ -67,7 +67,7 @@ public class MethodInsnCollector {
           if (isIgnore(owner, name, desc)) return;
 
           Method callee = new Method(owner, name, desc);
-          GreatMap.INSTANCE.getCallerCollector(callee).addCaller(caller);
+          GraphStore.INSTANCE.getCallerCollector(callee).addCaller(caller);
           calledClasses.add(owner);
         }
 
@@ -82,7 +82,7 @@ public class MethodInsnCollector {
           }
 
           Method callee = new Method(handle.getOwner(), handle.getName(), handle.getDesc());
-          GreatMap.INSTANCE.getCallerCollector(callee).addCaller(caller);
+          GraphStore.INSTANCE.getCallerCollector(callee).addCaller(caller);
           calledClasses.add(handle.getOwner());
         }
 

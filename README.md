@@ -5,7 +5,7 @@ It's able to trace the call hierarchy until the program entrance, recursion or u
 ### Quickstart:
 Install JDK 8 and Maven.
 Try the shell script: `./test.sh`
-Then it prints the call relations in this project, and generates a "traceback.html" file, showing the call hierarchy of class GreatMap.
+Then it prints the call relations in this project, and generates a "traceback.html" file, showing the call hierarchy of class GraphStore.
 > `-f` stands for file paths, `-q` stands for queries such as 'com.example.MyClass#myMethod', 'com.example.MyClass#*' or 'com.example.MyClass'
 
 Read the HTML report:

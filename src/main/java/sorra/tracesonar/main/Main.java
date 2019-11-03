@@ -24,12 +24,6 @@ public class Main {
 
     FileWalker.walkAll(files, excludes);
 
-//    System.out.println("Collected callers:\n");
-//    GreatMap.INSTANCE.callerCollectors.forEach((s, callerCollector) -> {
-//      System.out.printf("%s callers: %s\n", s, callerCollector.getCallers().size());
-//      callerCollector.getCallers().forEach(caller -> System.out.println("\t" + caller));
-//    });
-
     boolean potential = parser.getOptionValues(ArgsParser.Option.POTENTIAL).contains("true");
     System.out.println("potential=" + potential);
 

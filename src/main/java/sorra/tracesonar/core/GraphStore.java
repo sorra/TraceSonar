@@ -5,11 +5,11 @@ import java.util.Optional;
 
 import sorra.tracesonar.model.Method;
 
-public class GreatMap {
-  public static final GreatMap INSTANCE = new GreatMap();
+public class GraphStore {
+  public static final GraphStore INSTANCE = new GraphStore();
 
-  public Map<Method, CallerCollector> callerCollectors = Factory.infoMap();
-  public Map<String, MethodInsnCollector> methodInsnCollectors = Factory.infoMap();
+  private Map<Method, CallerCollector> callerCollectors = Factory.infoMap();
+  private Map<String, MethodInsnCollector> methodInsnCollectors = Factory.infoMap();
 
   public CallerCollector getCallerCollector(Method callee) {
     return callerCollectors.computeIfAbsent(callee, CallerCollector::new);
