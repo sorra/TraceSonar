@@ -18,12 +18,22 @@ import java.util.jar.JarFile;
 
 import sorra.tracesonar.util.FileUtil;
 
+/**
+ * Scans directories and files, applying the consumer to each class file
+ */
 public class FileWalker {
 
-  public static void walkAll(Collection<String> roots, Collection<String> ignores) {
+  public static void walkAll(Collection<String> roots, QualifierFilter qualifierFilter) {
     BiConsumer<Path, InputStream> classConsumer = (path, inputStream) -> {
+      String pathString = path.toString();
+      if (!qualifierFilter.filter(q ->
+          pathString.endsWith(q + ".class") || pathString.contains(q + '/') || pathString.contains(q + '$'))
+      ) {
+        return;
+      }
+
       try (InputStream classInput = inputStream) {
-        new MethodInsnCollector(classInput, ignores);
+        new MethodInsnCollector(classInput, qualifierFilter);
       } catch (IOException e) {
         throw new UncheckedIOException(e);
       } catch (Throwable t) {

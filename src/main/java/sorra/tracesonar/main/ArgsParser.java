@@ -43,8 +43,8 @@ public final class ArgsParser {
         case "--exclude":
           saveValues(Option.EXCLUDE);
           break;
-        case "--include-only":
-          saveValues(Option.INCLUDE_ONLY);
+        case "--include":
+          saveValues(Option.INCLUDE);
           break;
         case "--stop-at":
           saveValues(Option.STOP_AT);
@@ -76,6 +76,6 @@ public final class ArgsParser {
   }
 
   public enum Option {
-    FILE, QUERY, POTENTIAL, EXCLUDE, INCLUDE_ONLY, STOP_AT;
+    FILE, QUERY, POTENTIAL, EXCLUDE, INCLUDE, STOP_AT;
   }
 }

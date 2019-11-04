@@ -2,7 +2,6 @@ package sorra.tracesonar.core;
 
 import java.io.IOException;
 import java.io.InputStream;
-import java.util.Collection;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -15,15 +14,16 @@ import sorra.tracesonar.util.StringUtil;
 import static org.objectweb.asm.Opcodes.ASM5;
 
 public class MethodInsnCollector {
-  private Collection<String> ignores;
+
+  private final QualifierFilter qualifierFilter;
 
   private String className;
   private Set<String> calledClasses = new HashSet<>();
 
   private String topClassName;
 
-  public MethodInsnCollector(InputStream classInput, Collection<String> ignores) throws IOException {
-    this.ignores = ignores;
+  public MethodInsnCollector(InputStream classInput, QualifierFilter qualifierFilter) throws IOException {
+    this.qualifierFilter = qualifierFilter;
 
     ClassReader classReader = new ClassReader(classInput);
     classReader.accept(classVisitor, 0);
@@ -59,7 +59,9 @@ public class MethodInsnCollector {
 //          if (Strings.substringBefore(owner, "$").equals(topClassName)) { // Ignore self class calls
 //            return;
 //          }
-          if (isIgnore(owner, name, desc)) return;
+          if (isIgnore(owner, name, desc)) {
+            return;
+          }
 
           Method callee = new Method(owner, name, desc);
           GraphStore.INSTANCE.getCallerCollector(callee).addCaller(caller);
@@ -104,9 +106,8 @@ public class MethodInsnCollector {
       }
     }
 
-    return ignores.stream().anyMatch(
-        x -> owner.startsWith(x) && (owner.length() == x.length() || owner.charAt(x.length()) == '/')
-    );
+    return !qualifierFilter.filter(q ->
+        owner.equals(q) || owner.startsWith(q + '/') || owner.startsWith(q + '$'));
   }
 
 //  private static final Set<String> IGNORE_PACKAGE = new HashSet<>();

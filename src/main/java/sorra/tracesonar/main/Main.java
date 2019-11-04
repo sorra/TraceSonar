@@ -7,6 +7,7 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 import sorra.tracesonar.core.FileWalker;
+import sorra.tracesonar.core.QualifierFilter;
 import sorra.tracesonar.core.Traceback;
 import sorra.tracesonar.model.Method;
 import sorra.tracesonar.util.FileOutput;
@@ -17,16 +18,14 @@ public class Main {
   public static void main(String[] args) throws IOException {
     ArgsParser parser = new ArgsParser(args);
 
-    List<String> files = parser.getOptionValues(ArgsParser.Option.FILE);
-    List<String> excludes = parser.getOptionValues(ArgsParser.Option.EXCLUDE)
-        .stream()
-        .map(x -> x.replace('.', '/'))
-        .collect(Collectors.toList());
 
     {
       long timeStart = System.currentTimeMillis();
 
-      FileWalker.walkAll(files, excludes);
+      List<String> files = parser.getOptionValues(ArgsParser.Option.FILE);
+      List<String> includes = translateQnames(parser.getOptionValues(ArgsParser.Option.INCLUDE));
+      List<String> excludes = translateQnames(parser.getOptionValues(ArgsParser.Option.EXCLUDE));
+      FileWalker.walkAll(files, new QualifierFilter(includes, excludes));
 
       long timeCost = System.currentTimeMillis() - timeStart;
       System.out.println("Walk time cost: " + timeCost);
@@ -59,5 +58,11 @@ public class Main {
     String tmpl = new String(FileUtil.read(tmplInput, 300), StandardCharsets.UTF_8);
     FileOutput.writeFile("traceback.html", String.format(tmpl, allOutput));
     System.out.println("\nTraceback: traceback.html\n");
+  }
+
+  private static List<String> translateQnames(List<String> qnames) {
+    return qnames.stream()
+        .map(x -> x.replace('.', '/'))
+        .collect(Collectors.toList());
   }
 }
