@@ -26,6 +26,9 @@ public class FileWalker {
         new MethodInsnCollector(classInput, ignores);
       } catch (IOException e) {
         throw new UncheckedIOException(e);
+      } catch (Throwable t) {
+        System.err.printf("class_file=%s, error=%s", path, t);
+        throw t;
       }
     };
 
@@ -56,37 +59,43 @@ public class FileWalker {
   }
 
   private static boolean isClassFile(Path path) {
-    return path.toString().endsWith(".class") && !path.toFile().isDirectory();
+    String string = path.toString();
+    return string.endsWith(".class") && !string.endsWith("-info.class") && !path.toFile().isDirectory();
   }
 
   private static boolean isJarFile(Path path) {
     return AR_SUFFIXES.stream().anyMatch(path.toString()::endsWith);
   }
 
-  private static void handleClassFile(Path path, BiConsumer<Path, InputStream> submitter) {
+  private static void handleClassFile(Path path, BiConsumer<Path, InputStream> consumer) {
     try {
-      submitter.accept(path, new FileInputStream(path.toFile()));
+      consumer.accept(path, new FileInputStream(path.toFile()));
     } catch (FileNotFoundException e) {
       throw new UncheckedIOException(e);
     }
   }
 
-  private static void handleJarFile(Path path, BiConsumer<Path, InputStream> submitter) {
+  private static void handleJarFile(Path jarPath, BiConsumer<Path, InputStream> consumer) {
     try {
-      JarFile jarFile = new JarFile(path.toFile());
+      JarFile jarFile = new JarFile(jarPath.toFile());
       Enumeration<JarEntry> entries = jarFile.entries();
       while (entries.hasMoreElements()) {
         JarEntry entry = entries.nextElement();
-        if (entry.getName().endsWith(".class") && !entry.isDirectory()) {
+        if (jarEntryIsClassFile(entry)) {
           try (InputStream classIn = jarFile.getInputStream(entry)) {
             byte[] classBytes = FileUtil.read(classIn, 1024);
-            submitter.accept(Paths.get(entry.getName()), new ByteArrayInputStream(classBytes));
+            consumer.accept(Paths.get(jarPath + "!" + entry.getName()), new ByteArrayInputStream(classBytes));
           }
         }
       }
     } catch (IOException e) {
       throw new UncheckedIOException(e);
     }
+  }
+
+  private static boolean jarEntryIsClassFile(JarEntry entry) {
+    String string = entry.getName();
+    return string.endsWith(".class") && !string.endsWith("-info.class") && !entry.isDirectory();
   }
 
   private static final Collection<String> AR_SUFFIXES = Arrays.asList(".jar", ".war", ".ear");

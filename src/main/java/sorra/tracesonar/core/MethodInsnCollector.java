@@ -2,12 +2,12 @@ package sorra.tracesonar.core;
 
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.UncheckedIOException;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.Set;
 
 import org.objectweb.asm.*;
+
 import sorra.tracesonar.model.Method;
 import sorra.tracesonar.util.Pair;
 import sorra.tracesonar.util.StringUtil;
@@ -22,15 +22,10 @@ public class MethodInsnCollector {
 
   private String topClassName;
 
-  public MethodInsnCollector(InputStream classInput, Collection<String> ignores) {
+  public MethodInsnCollector(InputStream classInput, Collection<String> ignores) throws IOException {
     this.ignores = ignores;
 
-    ClassReader classReader;
-    try {
-      classReader = new ClassReader(classInput);
-    } catch (IOException e) {
-      throw new UncheckedIOException(e);
-    }
+    ClassReader classReader = new ClassReader(classInput);
     classReader.accept(classVisitor, 0);
   }
 
