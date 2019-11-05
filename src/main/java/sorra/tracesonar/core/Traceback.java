@@ -5,6 +5,9 @@ import java.util.stream.Collectors;
 
 import sorra.tracesonar.model.Method;
 
+/**
+ * Trace-back search and print the result tree
+ */
 public class Traceback {
   private boolean isHtml;
   private boolean includePotentialCalls;
@@ -43,7 +46,8 @@ public class Traceback {
     if (isHtml) output.append("<h3>").append(self).append("</h3>\n");
     else output.append(self).append("\n");
 
-    //Separate two stages to help debug
+    // Though java.util.Stream can be lazy
+    // Still separate two stages to help debug
     new Searcher(includePotentialCalls).search(self)
         .collect(Collectors.toList())
         .forEach(this::printTree);

@@ -1,5 +1,6 @@
 package sorra.tracesonar.core;
 
+import java.util.Collection;
 import java.util.Set;
 import java.util.stream.Stream;
 
@@ -18,7 +19,7 @@ class Searcher {
   Stream<TreeNode> search(Method self) {
     Stream<TreeNode> nodeStream;
     if (self.owner.equals("*")) {
-      nodeStream = ClassMap.INSTANCE.classOutlines.values().stream()
+      nodeStream = allClassOutlines().stream()
           .flatMap(co -> co.methods.stream())
           .map(this::searchTree);
     } else if (self.methodName.equals("*")) {
@@ -34,6 +35,10 @@ class Searcher {
     }
 
     return nodeStream;
+  }
+
+  private Collection<ClassMap.ClassOutline> allClassOutlines() {
+    return ClassMap.INSTANCE.classOutlines.values();
   }
 
   private static ClassMap.ClassOutline getClassOutline(Method self) {
