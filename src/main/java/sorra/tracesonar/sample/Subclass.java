@@ -2,11 +2,11 @@ package sorra.tracesonar.sample;
 
 public class Subclass extends SuperClass {
   @Override
-  public String does() {
-    return super.does();
+  public Object does() {
+    return new Object();
   }
 
-  void call() {
+  private void call() {
     ((Interface)this).does();
     ((SuperClass)this).does();
   }

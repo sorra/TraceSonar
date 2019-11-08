@@ -18,7 +18,6 @@ public class Main {
   public static void main(String[] args) throws IOException {
     ArgsParser parser = new ArgsParser(args);
 
-
     {
       long timeStart = System.currentTimeMillis();
 
@@ -41,11 +40,13 @@ public class Main {
       long timeStart = System.currentTimeMillis();
 
       for (String query : queries) {
-        // qualifiedName#method
+        // Format: qualified.Name#method
         String[] parts = StringUtil.splitFirst(query, "#");
         String qClassName = parts[0].replace('.', '/');
         String methodName = parts.length >= 2 ? parts[1] : "*";
+
         CharSequence output = new Traceback(true, potential).run(new Method(qClassName, methodName, "*"));
+
         allOutput.append(output);
       }
 

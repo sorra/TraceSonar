@@ -1,5 +1,8 @@
 package sorra.tracesonar.model;
 
+/**
+ * Represents a method identifier in class files
+ */
 public class Method {
   public final String owner;
   public final String methodName;
@@ -19,7 +22,6 @@ public class Method {
     Method caller = (Method) o;
 
     return methodName.equals(caller.methodName) && owner.equals(caller.owner) && desc.equals(caller.desc);
-
   }
 
   @Override
@@ -36,6 +38,9 @@ public class Method {
     if (methodName.contains("<") || methodName.contains(">")) {
       name = methodName.replace("<", "&lt;").replace(">", "&gt;");
     }
+
+    String desc = this.desc.replace("Ljava/lang/", "");
+
     return String.format("<- %s #%s %s", owner.replace('/', '.'), name, desc);
   }
 }
