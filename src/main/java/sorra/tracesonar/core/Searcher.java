@@ -1,7 +1,9 @@
 package sorra.tracesonar.core;
 
 import java.util.Collection;
+import java.util.List;
 import java.util.Set;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import sorra.tracesonar.model.Method;
@@ -16,37 +18,34 @@ class Searcher {
     this.includePotentialCalls = includePotentialCalls;
   }
 
-  Stream<TreeNode> search(Method self) {
-    Stream<TreeNode> nodeStream;
-    if (self.owner.equals("*")) {
-      nodeStream = allClassOutlines().stream()
-          .flatMap(co -> co.methods.stream())
-          .map(this::searchTree);
-    } else if (self.methodName.equals("*")) {
-      nodeStream = getClassOutline(self).methods.stream()
-          .filter(x -> x.owner.equals(self.owner))
-          .map(this::searchTree);
-    } else if (self.desc.equals("*")) {
-      nodeStream = getClassOutline(self).methods.stream()
-          .filter(x -> x.methodName.equals(self.methodName) && x.owner.equals(self.owner))
-          .map(this::searchTree);
+  Stream<TreeNode> search(Method criteria) {
+    List<Method> methods;
+    ClassMap classMap = ClassMap.INSTANCE;
+    if (criteria.owner.equals("*")) {
+      methods = classMap.allClassOutlines().stream()
+          .flatMap(co -> co.getMethods().stream())
+          .collect(Collectors.toList());
+    } else if (criteria.methodName.equals("*")) {
+      methods = classMap.getClassOutline(criteria.owner).getMethods().stream()
+          .filter(x -> x.owner.equals(criteria.owner))
+          .collect(Collectors.toList());
+    } else if (criteria.desc.equals("*")) {
+      methods = classMap.getClassOutline(criteria.owner).getMethods().stream()
+          .filter(x -> x.methodName.equals(criteria.methodName) && x.owner.equals(criteria.owner))
+          .collect(Collectors.toList());
     } else {
       throw new IllegalArgumentException("invalid pattern");
     }
 
-    return nodeStream;
+    return searchOnMethods(criteria, methods);
   }
 
-  private Collection<ClassMap.ClassOutline> allClassOutlines() {
-    return ClassMap.INSTANCE.classOutlines.values();
-  }
-
-  private static ClassMap.ClassOutline getClassOutline(Method self) {
-    ClassMap.ClassOutline classOutline = ClassMap.INSTANCE.classOutlines.get(self.owner);
-    if (classOutline == null) {
-      throw new RuntimeException("Cannot find class: " + self.owner);
+  private Stream<TreeNode> searchOnMethods(Method criteria, Collection<Method> methods) {
+    if (methods.isEmpty()) {
+      throw new IllegalArgumentException("No method is found by given criteria " + criteria);
     }
-    return  classOutline;
+
+    return methods.stream().map(this::searchTree);
   }
 
   private TreeNode searchTree(Method method) {

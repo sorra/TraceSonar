@@ -1,6 +1,9 @@
 package sorra.tracesonar.util;
 
-public abstract class StringUtil {
+public final class StringUtil {
+
+  private StringUtil() {}
+
   public static String substringBefore(final String str, final String separator) {
     if (str == null || str.isEmpty()) {
       return str;
@@ -23,8 +26,7 @@ public abstract class StringUtil {
     if (pos < 0) {
       return new String[]{str};
     }
-    return new String[]{str.substring(0, pos),
-        str.substring(pos + separator.length(), str.length())};
+    return new String[]{str.substring(0, pos), str.substring(pos + separator.length())};
   }
 
   public static String removeSurrounding(String str, String piece) {

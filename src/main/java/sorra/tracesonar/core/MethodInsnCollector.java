@@ -29,10 +29,7 @@ public class MethodInsnCollector {
     classReader.accept(classVisitor, 0);
   }
 
-  public String getClassName() {
-    return className;
-  }
-
+  @SuppressWarnings("FieldCanBeLocal")
   private ClassVisitor classVisitor = new ClassVisitor(ASM5) {
     ClassMap.ClassOutline classOutline;
 
@@ -40,7 +37,7 @@ public class MethodInsnCollector {
     public void visit(int version, int access, String name, String signature, String superName, String[] interfaces) {
       className = name;
       topClassName = StringUtil.substringBefore(className, "$");
-      classOutline = new ClassMap.ClassOutline(superName, interfaces);
+      classOutline = new ClassMap.ClassOutline(name, superName, interfaces);
       ClassMap.INSTANCE.addClassOutline(className, classOutline);
     }
 
