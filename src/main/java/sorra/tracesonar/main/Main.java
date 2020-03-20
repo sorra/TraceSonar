@@ -18,6 +18,9 @@ public class Main {
   public static void main(String[] args) throws IOException {
     ArgsParser parser = new ArgsParser(args);
 
+    boolean potential = parser.getOptionValues(ArgsParser.Option.POTENTIAL).contains("true");
+    System.out.println("potential=" + potential);
+
     {
       long timeStart = System.currentTimeMillis();
 
@@ -30,10 +33,8 @@ public class Main {
       System.out.println("Walk time cost: " + timeCost);
     }
 
-    boolean potential = parser.getOptionValues(ArgsParser.Option.POTENTIAL).contains("true");
-    System.out.println("potential=" + potential);
-
     List<String> queries = parser.getOptionValues(ArgsParser.Option.QUERY);
+    List<String> ends = translateQnames(parser.getOptionValues(ArgsParser.Option.END_AT));
 
     StringBuilder allOutput = new StringBuilder();
     {
@@ -45,7 +46,7 @@ public class Main {
         String qClassName = parts[0].replace('.', '/');
         String methodName = parts.length >= 2 ? parts[1] : "*";
 
-        CharSequence output = new Traceback(true, potential).run(new Method(qClassName, methodName, "*"));
+        CharSequence output = new Traceback(true, potential).run(new Method(qClassName, methodName, "*"), ends);
 
         allOutput.append(output);
       }

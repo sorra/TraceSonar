@@ -103,8 +103,7 @@ public class MethodInsnCollector {
       }
     }
 
-    return !qualifierFilter.filter(q ->
-        owner.equals(q) || owner.startsWith(q + '/') || owner.startsWith(q + '$'));
+    return !qualifierFilter.filterClass(owner);
   }
 
 //  private static final Set<String> IGNORE_PACKAGE = new HashSet<>();

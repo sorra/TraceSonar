@@ -25,10 +25,7 @@ public class FileWalker {
 
   public static void walkAll(Collection<String> roots, QualifierFilter qualifierFilter) {
     BiConsumer<Path, InputStream> classConsumer = (path, inputStream) -> {
-      String pathString = path.toString();
-      if (!qualifierFilter.filter(q ->
-          pathString.endsWith(q + ".class") || pathString.contains(q + '/') || pathString.contains(q + '$'))
-      ) {
+      if (!qualifierFilter.filterClassFile(path.toString())) {
         return;
       }
 

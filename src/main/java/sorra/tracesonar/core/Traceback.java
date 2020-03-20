@@ -1,6 +1,7 @@
 package sorra.tracesonar.core;
 
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.stream.Collectors;
 
 import sorra.tracesonar.model.Method;
@@ -42,13 +43,13 @@ public class Traceback {
     }
   }
 
-  public CharSequence run(Method self) {
+  public CharSequence run(Method self, Collection<String> ends) {
     if (isHtml) output.append("<h3>").append(self).append("</h3>\n");
     else output.append(self).append("\n");
 
     // Though java.util.Stream can be lazy
     // Still separate two stages to help debug
-    new Searcher(includePotentialCalls).search(self)
+    new Searcher(includePotentialCalls, ends).search(self)
         .collect(Collectors.toList())
         .forEach(this::printTree);
 

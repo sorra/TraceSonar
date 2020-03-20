@@ -13,9 +13,11 @@ import sorra.tracesonar.model.Method;
  */
 class Searcher {
   private boolean includePotentialCalls;
+  private Collection<String> ends;
 
-  Searcher(boolean includePotentialCalls) {
+  Searcher(boolean includePotentialCalls, Collection<String> ends) {
     this.includePotentialCalls = includePotentialCalls;
+    this.ends = ends;
   }
 
   Stream<TreeNode> search(Method criteria) {
@@ -54,6 +56,11 @@ class Searcher {
 
   private TreeNode searchTree(Method self, TreeNode parent, boolean asSuper) {
     TreeNode cur = new TreeNode(self, asSuper, parent);
+
+    if (ends.stream().anyMatch(QualifierFilter.classQnameMatcher(self.owner))) {
+      return cur;
+    }
+
     searchCallers(cur, false);
 
     //TODO if cur.depth < k (configurable)

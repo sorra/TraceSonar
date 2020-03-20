@@ -46,8 +46,8 @@ public final class ArgsParser {
         case "--include":
           saveValues(Option.INCLUDE);
           break;
-        case "--stop-at":
-          saveValues(Option.STOP_AT);
+        case "--end-at":
+          saveValues(Option.END_AT);
           break;
         default:
           throw new IllegalArgumentException("Unknown CLI option: " + arg);
@@ -76,6 +76,6 @@ public final class ArgsParser {
   }
 
   public enum Option {
-    FILE, QUERY, POTENTIAL, EXCLUDE, INCLUDE, STOP_AT;
+    FILE, QUERY, POTENTIAL, EXCLUDE, INCLUDE, END_AT;
   }
 }

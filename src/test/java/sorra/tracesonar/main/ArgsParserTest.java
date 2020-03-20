@@ -18,7 +18,7 @@ public class ArgsParserTest {
         "-p",
         "--exclude",
         "--include", "io1",
-        "--stop-at", "sa1", "sa2", "sa3"};
+        "--end-at", "sa1", "sa2", "sa3"};
 
     ArgsParser parser = new ArgsParser(args);
 
@@ -27,6 +27,6 @@ public class ArgsParserTest {
     assertEquals(singletonList("true"), parser.getOptionValues(POTENTIAL));
     assertEquals(emptyList(), parser.getOptionValues(EXCLUDE));
     assertEquals(singletonList("io1"), parser.getOptionValues(INCLUDE));
-    assertEquals(Arrays.asList("sa1", "sa2", "sa3"), parser.getOptionValues(STOP_AT));
+    assertEquals(Arrays.asList("sa1", "sa2", "sa3"), parser.getOptionValues(END_AT));
   }
 }
