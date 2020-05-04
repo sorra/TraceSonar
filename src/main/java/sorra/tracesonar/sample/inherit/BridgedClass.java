@@ -1,4 +1,4 @@
-package sorra.tracesonar.sample;
+package sorra.tracesonar.sample.inherit;
 
 public class BridgedClass implements Interface {
 

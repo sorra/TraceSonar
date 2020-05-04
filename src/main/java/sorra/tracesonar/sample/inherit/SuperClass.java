@@ -1,4 +1,4 @@
-package sorra.tracesonar.sample;
+package sorra.tracesonar.sample.inherit;
 
 public class SuperClass implements Interface {
   @Override

@@ -1,4 +1,4 @@
-package sorra.tracesonar.sample;
+package sorra.tracesonar.sample.inherit;
 
 public class Entrypoint {
   public static void main(String[] args) {

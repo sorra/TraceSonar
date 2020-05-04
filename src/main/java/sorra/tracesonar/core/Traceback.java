@@ -30,15 +30,27 @@ public class Traceback {
           if (node.callers.isEmpty()) cssClass += " endpoint";
           if (node.isCallingSuper) cssClass += " potential";
 
+          String errorMessage;
+          if (node.hasError()) {
+            cssClass += " error";
+            errorMessage = " {" + node.getError() + "}";
+          }
+          else errorMessage = "";
+
           output.append(String.format(
-              "<div class=\"%s\" style=\"margin-left:%dem\">%s</div>\n", cssClass, node.depth * 5, node.self));
+              "<div class=\"%s\" style=\"margin-left:%dem\">%s%s</div>\n",
+              cssClass, node.depth * 2, node.self, errorMessage));
         }
       };
     } else {
       printer = node -> {
         char[] indents = new char[node.depth];
         Arrays.fill(indents, '\t');
-        output.append(String.valueOf(indents)).append(node.self).append('\n');
+        output.append(String.valueOf(indents)).append(node.self);
+        if (node.hasError()) {
+          output.append(" {").append(node.getError()).append('}');
+        }
+        output.append('\n');
       };
     }
   }

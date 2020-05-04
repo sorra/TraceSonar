@@ -14,6 +14,7 @@ import sorra.tracesonar.model.Method;
 class Searcher {
   private boolean includePotentialCalls;
   private Collection<String> ends;
+  private boolean stopped;
 
   Searcher(boolean includePotentialCalls, Collection<String> ends) {
     this.includePotentialCalls = includePotentialCalls;
@@ -56,8 +57,14 @@ class Searcher {
 
   private TreeNode searchTree(Method self, TreeNode parent, boolean asSuper) {
     TreeNode cur = new TreeNode(self, asSuper, parent);
+    if (cur.depth == 100) {
+      cur.setError("Exceeds max depth!");
+      stopped = true;
+      return cur;
+    }
 
-    if (ends.stream().anyMatch(QualifierFilter.classQnameMatcher(self.owner))) {
+    if (stopped || ends.stream().anyMatch(QualifierFilter.classQnameMatcher(self.owner))) {
+      cur.setError("Stopped!");
       return cur;
     }
 
@@ -75,14 +82,14 @@ class Searcher {
   }
 
   private void searchCallers(TreeNode cur, boolean asSuper) {
-    if (cur.parent != null) {
-      if (cur.parent.findCycle(cur.self)) {
-        cur.parent.addCycleEnd(cur.self, asSuper);
-        return;
-      } else {
-        cur.parent.callers.add(cur);
-      }
-    }
+//    if (cur.parent != null) {
+//      if (cur.parent.findCycle(cur.self)) {
+////        cur.parent.addCycleEnd(cur.self, asSuper);
+//        return;
+//      } else {
+////        cur.parent.callers.add(cur);
+//      }
+//    }
 
     Set<Method> callers = GraphStore.INSTANCE.getCallerCollector(cur.self).getCallers();
     for (Method caller : callers) {
