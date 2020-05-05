@@ -12,12 +12,14 @@ import sorra.tracesonar.model.Method;
  * Trace-back Searcher
  */
 class Searcher {
-  private boolean includePotentialCalls;
-  private Collection<String> ends;
+  private final boolean includePotentialCalls;
+  private final boolean onlySearchDirectCalls;
+  private final Collection<String> ends;
   private boolean stopped;
 
-  Searcher(boolean includePotentialCalls, Collection<String> ends) {
+  Searcher(boolean includePotentialCalls, boolean onlySearchDirectCalls, Collection<String> ends) {
     this.includePotentialCalls = includePotentialCalls;
+    this.onlySearchDirectCalls = onlySearchDirectCalls;
     this.ends = ends;
   }
 
@@ -32,12 +34,12 @@ class Searcher {
       methods = classMap.getClassOutline(criteria.owner).getMethods().stream()
           .filter(x -> x.owner.equals(criteria.owner))
           .collect(Collectors.toList());
-    } else if (criteria.desc.equals("*")) {
+    } else { // if (criteria.desc.equals("*")) {
       methods = classMap.getClassOutline(criteria.owner).getMethods().stream()
           .filter(x -> x.methodName.equals(criteria.methodName) && x.owner.equals(criteria.owner))
           .collect(Collectors.toList());
-    } else {
-      throw new IllegalArgumentException("invalid pattern");
+//    } else {
+//      throw new IllegalArgumentException("invalid pattern");
     }
 
     return searchOnMethods(criteria, methods);
@@ -68,9 +70,12 @@ class Searcher {
       return cur;
     }
 
+    if (onlySearchDirectCalls && cur.depth == 1) {
+      return cur;
+    }
+
     searchCallers(cur, false);
 
-    //TODO if cur.depth < k (configurable)
     if (includePotentialCalls) {
       for (Method superMethod : ClassMap.INSTANCE.findSuperMethods(self)) {
         TreeNode superCur = new TreeNode(superMethod, asSuper, parent);

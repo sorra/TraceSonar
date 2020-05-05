@@ -17,37 +17,46 @@ import sorra.tracesonar.util.StringUtil;
 public class Main {
   public static void main(String[] args) throws IOException {
     ArgsParser parser = new ArgsParser(args);
+    System.out.println(parser.prettyPrint());
 
-    boolean potential = parser.getOptionValues(ArgsParser.Option.POTENTIAL).contains("true");
-    System.out.println("potential=" + potential);
-
-    {
-      long timeStart = System.currentTimeMillis();
-
-      List<String> files = parser.getOptionValues(ArgsParser.Option.FILE);
-      List<String> includes = translateQnames(parser.getOptionValues(ArgsParser.Option.INCLUDE));
-      List<String> excludes = translateQnames(parser.getOptionValues(ArgsParser.Option.EXCLUDE));
-      FileWalker.walkAll(files, new QualifierFilter(includes, excludes));
-
-      long timeCost = System.currentTimeMillis() - timeStart;
-      System.out.println("Walk time cost: " + timeCost);
-    }
-
-    List<String> queries = parser.getOptionValues(ArgsParser.Option.QUERY);
-    List<String> ends = translateQnames(parser.getOptionValues(ArgsParser.Option.END_AT));
+    buildDatabase(parser);
 
     StringBuilder allOutput = new StringBuilder();
     {
       long timeStart = System.currentTimeMillis();
 
+      boolean potential = parser.getOptionValues(ArgsParser.Option.POTENTIAL).contains("true");
+      boolean direct = parser.getOptionValues(ArgsParser.Option.DIRECT).contains("true");
+      List<String> queries = parser.getOptionValues(ArgsParser.Option.QUERY);
+      List<String> ends = translateQnames(parser.getOptionValues(ArgsParser.Option.END_AT));
+
       for (String query : queries) {
-        // Format: qualified.Name#method
-        String[] parts = StringUtil.splitFirst(query, "#");
-        String qClassName = parts[0].replace('.', '/');
-        String methodName = parts.length >= 2 ? parts[1] : "*";
+        // Format: qualifier.Class#method()
+        String[] classAndMethod = StringUtil.splitFirst(query, "#");
+        String qClassName = classAndMethod[0].replace('.', '/');
+        String methodName;
+        String params;
+        if (classAndMethod.length > 2) {
+          throw new IllegalArgumentException(query);
+        } else if (classAndMethod.length < 2) {
+          methodName = "*";
+          params = "*";
+        } else {
+          String[] methodAndParams = StringUtil.splitFirst(classAndMethod[1], "(");
+          methodName = methodAndParams[0];
+          if (methodAndParams.length > 2) {
+            throw new IllegalArgumentException(query);
+          } else if (methodAndParams.length < 2) {
+            params = "*";
+          } else {
+            params = methodAndParams[1];
+            if (params.endsWith(")")) {
+              params = params.substring(0, params.length() - 1);
+            }
+          }
+        }
 
-        CharSequence output = new Traceback(true, potential).run(new Method(qClassName, methodName, "*"), ends);
-
+        CharSequence output = new Traceback(true, potential, direct).run(new Method(qClassName, methodName, params), ends);
         allOutput.append(output);
       }
 
@@ -60,6 +69,18 @@ public class Main {
     String tmpl = new String(FileUtil.read(tmplInput, 300), StandardCharsets.UTF_8);
     FileOutput.writeFile("traceback.html", String.format(tmpl, allOutput));
     System.out.println("\nTraceback: traceback.html\n");
+  }
+
+  private static void buildDatabase(ArgsParser parser) {
+    long timeStart = System.currentTimeMillis();
+
+    List<String> files = parser.getOptionValues(ArgsParser.Option.FILE);
+    List<String> includes = translateQnames(parser.getOptionValues(ArgsParser.Option.INCLUDE));
+    List<String> excludes = translateQnames(parser.getOptionValues(ArgsParser.Option.EXCLUDE));
+    FileWalker.walkAll(files, new QualifierFilter(includes, excludes));
+
+    long timeCost = System.currentTimeMillis() - timeStart;
+    System.out.println("Walk time cost: " + timeCost);
   }
 
   private static List<String> translateQnames(List<String> qnames) {

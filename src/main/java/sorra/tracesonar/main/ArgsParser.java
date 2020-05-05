@@ -17,6 +17,15 @@ public final class ArgsParser {
     parse();
   }
 
+  public String prettyPrint() {
+    StringBuilder sb = new StringBuilder("CLI args: {\n");
+    optionValuesMap.forEach((option, values) -> {
+      sb.append("  ").append(option).append(": ").append(values).append("\n");
+    });
+    sb.append("}\n");
+    return sb.toString();
+  }
+
   public List<String> getOptionValues(Option option) {
     List<String> values = optionValuesMap.get(option);
     return values != null ? values : Collections.emptyList();
@@ -40,6 +49,9 @@ public final class ArgsParser {
         case "-p":
         case "--potential":
           optionValuesMap.put(Option.POTENTIAL, Collections.singletonList("true"));
+        case "-d":
+        case "--direct":
+          optionValuesMap.put(Option.DIRECT, Collections.singletonList("true"));
         case "--exclude":
           saveValues(Option.EXCLUDE);
           break;
@@ -76,6 +88,6 @@ public final class ArgsParser {
   }
 
   public enum Option {
-    FILE, QUERY, POTENTIAL, EXCLUDE, INCLUDE, END_AT;
+    FILE, QUERY, POTENTIAL, DIRECT, EXCLUDE, INCLUDE, END_AT;
   }
 }

@@ -10,15 +10,17 @@ import sorra.tracesonar.model.Method;
  * Trace-back search and print the result tree
  */
 public class Traceback {
-  private boolean isHtml;
-  private boolean includePotentialCalls;
+  private final boolean isHtml;
+  private final boolean includePotentialCalls;
+  private final boolean onlySearchDirectCalls;
 
   private Printer printer;
   private StringBuilder output = new StringBuilder();
 
-  public Traceback(boolean isHtml, boolean includePotentialCalls) {
+  public Traceback(boolean isHtml, boolean includePotentialCalls, boolean onlySearchDirectCalls) {
     this.isHtml = isHtml;
     this.includePotentialCalls = includePotentialCalls;
+    this.onlySearchDirectCalls = onlySearchDirectCalls;
 
     if (isHtml) {
       printer = node -> {
@@ -61,7 +63,7 @@ public class Traceback {
 
     // Though java.util.Stream can be lazy
     // Still separate two stages to help debug
-    new Searcher(includePotentialCalls, ends).search(self)
+    new Searcher(includePotentialCalls, onlySearchDirectCalls, ends).search(self)
         .collect(Collectors.toList())
         .forEach(this::printTree);
 
