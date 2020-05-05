@@ -4,7 +4,7 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.stream.Collectors;
 
-import sorra.tracesonar.model.Method;
+import sorra.tracesonar.model.Query;
 
 /**
  * Trace-back search and print the result tree
@@ -57,13 +57,13 @@ public class Traceback {
     }
   }
 
-  public CharSequence run(Method self, Collection<String> ends) {
-    if (isHtml) output.append("<h3>").append(self).append("</h3>\n");
-    else output.append(self).append("\n");
+  public CharSequence run(Query query, Collection<String> ends) {
+    if (isHtml) output.append("<h3>").append(query).append("</h3>\n");
+    else output.append(query).append("\n");
 
     // Though java.util.Stream can be lazy
     // Still separate two stages to help debug
-    new Searcher(includePotentialCalls, onlySearchDirectCalls, ends).search(self)
+    new Searcher(includePotentialCalls, onlySearchDirectCalls, ends).search(query)
         .collect(Collectors.toList())
         .forEach(this::printTree);
 

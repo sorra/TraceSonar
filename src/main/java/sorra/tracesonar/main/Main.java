@@ -9,7 +9,7 @@ import java.util.stream.Collectors;
 import sorra.tracesonar.core.FileWalker;
 import sorra.tracesonar.core.QualifierFilter;
 import sorra.tracesonar.core.Traceback;
-import sorra.tracesonar.model.Method;
+import sorra.tracesonar.model.Query;
 import sorra.tracesonar.util.FileOutput;
 import sorra.tracesonar.util.FileUtil;
 import sorra.tracesonar.util.StringUtil;
@@ -56,7 +56,7 @@ public class Main {
           }
         }
 
-        CharSequence output = new Traceback(true, potential, direct).run(new Method(qClassName, methodName, params), ends);
+        CharSequence output = new Traceback(true, potential, direct).run(new Query(qClassName, methodName, params), ends);
         allOutput.append(output);
       }
 

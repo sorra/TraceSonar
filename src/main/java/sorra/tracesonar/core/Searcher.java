@@ -7,6 +7,10 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import sorra.tracesonar.model.Method;
+import sorra.tracesonar.model.Query;
+import sorra.tracesonar.util.BytecodeMethodParamsResolver;
+import sorra.tracesonar.util.QueryMethodParamsResolver;
+import sorra.tracesonar.util.StringUtil;
 
 /**
  * Trace-back Searcher
@@ -23,33 +27,59 @@ class Searcher {
     this.ends = ends;
   }
 
-  Stream<TreeNode> search(Method criteria) {
+  Stream<TreeNode> search(Query query) {
     List<Method> methods;
     ClassMap classMap = ClassMap.INSTANCE;
-    if (criteria.owner.equals("*")) {
+    if (query.owner.equals("*")) {
       methods = classMap.allClassOutlines().stream()
           .flatMap(co -> co.getMethods().stream())
           .collect(Collectors.toList());
-    } else if (criteria.methodName.equals("*")) {
-      methods = classMap.getClassOutline(criteria.owner).getMethods().stream()
-          .filter(x -> x.owner.equals(criteria.owner))
+    } else if (query.methodName.equals("*")) {
+      methods = classMap.getClassOutline(query.owner).getMethods().stream()
+          .filter(x -> x.owner.equals(query.owner))
           .collect(Collectors.toList());
-    } else { // if (criteria.desc.equals("*")) {
-      methods = classMap.getClassOutline(criteria.owner).getMethods().stream()
-          .filter(x -> x.methodName.equals(criteria.methodName) && x.owner.equals(criteria.owner))
+    } else if (query.params.equals("*")) {
+      methods = classMap.getClassOutline(query.owner).getMethods().stream()
+          .filter(x -> x.methodName.equals(query.methodName) && x.owner.equals(query.owner))
           .collect(Collectors.toList());
-//    } else {
-//      throw new IllegalArgumentException("invalid pattern");
+    } else {
+      methods = classMap.getClassOutline(query.owner).getMethods().stream()
+          .filter(x -> x.methodName.equals(query.methodName) && x.owner.equals(query.owner) && paramsMatch(query, x))
+          .collect(Collectors.toList());
     }
 
-    return searchOnMethods(criteria, methods);
+    if (methods.isEmpty()) {
+      throw new IllegalArgumentException("invalid pattern: no matching target");
+    }
+
+    return searchOnMethods(methods);
   }
 
-  private Stream<TreeNode> searchOnMethods(Method criteria, Collection<Method> methods) {
-    if (methods.isEmpty()) {
-      throw new IllegalArgumentException("No method is found by given criteria " + criteria);
+  private boolean paramsMatch(Query query, Method method) {
+    List<String> queryParams = new QueryMethodParamsResolver().resolve(query.params);
+    List<String> methodParams = new BytecodeMethodParamsResolver().resolve(method.desc);
+    if (queryParams.size() != methodParams.size()) {
+      return false;
     }
 
+    int size = queryParams.size();
+    for (int i = 0; i < size; i++) {
+      String q = queryParams.get(i);
+      String m = methodParams.get(i);
+
+      if (m.endsWith(q)) {
+        continue;
+      }
+      if (m.endsWith(q) && m.endsWith("." + q)) {
+        continue;
+      }
+      return false;
+    }
+
+    return true;
+  }
+
+  private Stream<TreeNode> searchOnMethods(Collection<Method> methods) {
     return methods.stream().map(this::searchTree);
   }
 
@@ -65,8 +95,13 @@ class Searcher {
       return cur;
     }
 
-    if (stopped || ends.stream().anyMatch(QualifierFilter.classQnameMatcher(self.owner))) {
+    if (stopped) {
       cur.setError("Stopped!");
+      return cur;
+    }
+
+    if (ends.stream().anyMatch(QualifierFilter.classQnameMatcher(self.owner))) {
+      cur.setError("Ended at this!");
       return cur;
     }
 
