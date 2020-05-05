@@ -35,7 +35,11 @@ public class BytecodeMethodParamsResolver {
   public List<String> resolve(String desc) {
     ensureClean();
 
-    desc = desc.substring(desc.indexOf('(') + 1, desc.lastIndexOf(')'));
+    int beforeIdx = desc.indexOf('(');
+    if (beforeIdx < 0) {
+      return Collections.emptyList();
+    }
+    desc = desc.substring(beforeIdx + 1, desc.lastIndexOf(')'));
 
     int total = desc.length();
     for (int i = 0; i < total; i++) {

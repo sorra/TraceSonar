@@ -25,7 +25,7 @@ public class BytecodeMethodParamsResolverTest {
 
   @Test
   public void testResolveEmpty() {
-    List<String> params = new BytecodeMethodParamsResolver().resolve("()Ljava/util/List;");
+    List<String> params = new BytecodeMethodParamsResolver().resolve("Ljava/util/List;");
 
     Assert.assertEquals(Collections.emptyList(), params);
   }
