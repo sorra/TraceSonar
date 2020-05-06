@@ -9,7 +9,6 @@ import org.objectweb.asm.*;
 
 import sorra.tracesonar.model.Method;
 import sorra.tracesonar.util.Pair;
-import sorra.tracesonar.util.StringUtil;
 
 import static org.objectweb.asm.Opcodes.ASM5;
 
@@ -19,8 +18,6 @@ public class MethodInsnCollector {
 
   private String className;
   private Set<String> calledClasses = new HashSet<>();
-
-  private String topClassName;
 
   public MethodInsnCollector(InputStream classInput, QualifierFilter qualifierFilter) throws IOException {
     this.qualifierFilter = qualifierFilter;
@@ -36,7 +33,6 @@ public class MethodInsnCollector {
     @Override
     public void visit(int version, int access, String name, String signature, String superName, String[] interfaces) {
       className = name;
-      topClassName = StringUtil.substringBefore(className, "$");
       classOutline = new ClassMap.ClassOutline(name, superName, interfaces);
       ClassMap.INSTANCE.addClassOutline(className, classOutline);
     }
